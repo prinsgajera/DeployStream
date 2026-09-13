@@ -1,0 +1,56 @@
+import "dotenv/config";
+import Fastify from "fastify";
+import { env } from "./config/env.js";
+import app from "./app.js";
+
+const fastify = Fastify({
+  logger:
+    env.NODE_ENV === "development"
+      ? {
+          level: "info",
+          transport: {
+            target: "pino-pretty",
+            options: { colorize: true, translateTime: "HH:MM:ss" },
+          },
+        }
+      : { level: "warn" },
+});
+
+fastify.register(app);
+
+fastify.get("/health", {
+  schema: {
+    response: {
+      200: {
+        type: "object",
+        properties: {
+          status: { type: "string" },
+          timestamp: { type: "string" },
+        },
+      },
+    },
+  },
+  handler: async () => ({ status: "ok", timestamp: new Date().toISOString() }),
+});
+
+const start = async (): Promise<void> => {
+  try {
+    await fastify.listen({ port: env.PORT, host: env.HOST });
+    fastify.log.info(`🚀 DeployStream API running at http://${env.HOST}:${env.PORT}`);
+  } catch (err) {
+    fastify.log.error(err);
+    process.exit(1);
+  }
+};
+
+process.on("SIGINT", async () => {
+  await fastify.close();
+  process.exit(0);
+});
+
+process.on("SIGTERM", async () => {
+  await fastify.close();
+  process.exit(0);
+});
+
+start();
