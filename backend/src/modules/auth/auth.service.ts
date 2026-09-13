@@ -1,4 +1,4 @@
-import { prisma } from "../../lib/prisma.js";
+import { UserModel, type IUserDocument } from "../../models/user.model.js";
 import { encryptToken, decryptToken } from "../../lib/crypto.js";
 
 interface GitHubUserProfile {
@@ -72,48 +72,39 @@ export async function fetchGitHubPrimaryEmail(accessToken: string): Promise<stri
 export async function upsertUserFromGitHub(
   profile: GitHubUserProfile,
   accessToken: string
-): Promise<Awaited<ReturnType<typeof prisma.user.upsert>>> {
+): Promise<IUserDocument> {
   const email = profile.email ?? (await fetchGitHubPrimaryEmail(accessToken));
   const { firstName, lastName } = parseName(profile.name);
   const encryptedToken = encryptToken(accessToken);
 
-  return prisma.user.upsert({
-    where: { githubId: String(profile.id) },
-    update: {
-      username: profile.login,
-      firstName,
-      lastName,
-      email,
-      avatarUrl: profile.avatar_url,
-      githubToken: encryptedToken,
+  const user = await UserModel.findOneAndUpdate(
+    { githubId: String(profile.id) },
+    {
+      $set: {
+        username: profile.login,
+        firstName,
+        lastName,
+        email,
+        avatarUrl: profile.avatar_url,
+        githubToken: encryptedToken,
+      },
     },
-    create: {
-      githubId: String(profile.id),
-      username: profile.login,
-      firstName,
-      lastName,
-      email,
-      avatarUrl: profile.avatar_url,
-      githubToken: encryptedToken,
-    },
-  });
+    { returnDocument: "after", upsert: true, setDefaultsOnInsert: true }
+  );
+
+  if (!user) {
+    throw new Error("Failed to upsert user profile");
+  }
+
+  return user;
 }
 
 export async function getUserById(id: string) {
-  return prisma.user.findUnique({
-    where: { id },
-    select: {
-      id: true,
-      githubId: true,
-      username: true,
-      firstName: true,
-      lastName: true,
-      email: true,
-      avatarUrl: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-  });
+  const user = await UserModel.findById(id).select(
+    "githubId username firstName lastName email avatarUrl createdAt updatedAt"
+  );
+  if (!user) return null;
+  return user.toJSON();
 }
 
 export { decryptToken };

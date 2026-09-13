@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import fp from "fastify-plugin";
 import fastifyCors from "@fastify/cors";
+import fastifyCookie from "@fastify/cookie";
 import fastifyOAuth2, { type OAuth2Namespace } from "@fastify/oauth2";
 import { env } from "./config/env.js";
 import authPlugin from "./plugins/auth.plugin.js";
@@ -18,6 +19,8 @@ async function app(fastify: FastifyInstance): Promise<void> {
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   });
+
+  await fastify.register(fastifyCookie);
 
   await fastify.register(fastifyOAuth2, {
     name: "githubOAuth2",

@@ -1,6 +1,7 @@
 import "dotenv/config";
 import Fastify from "fastify";
 import { env } from "./config/env.js";
+import { connectDB, disconnectDB } from "./lib/db.js";
 import app from "./app.js";
 
 const fastify = Fastify({
@@ -35,6 +36,7 @@ fastify.get("/health", {
 
 const start = async (): Promise<void> => {
   try {
+    await connectDB();
     await fastify.listen({ port: env.PORT, host: env.HOST });
     fastify.log.info(`🚀 DeployStream API running at http://${env.HOST}:${env.PORT}`);
   } catch (err) {
@@ -43,14 +45,14 @@ const start = async (): Promise<void> => {
   }
 };
 
-process.on("SIGINT", async () => {
+const handleShutdown = async (signal: string) => {
+  fastify.log.info(`Received ${signal}. Shutting down gracefully...`);
   await fastify.close();
+  await disconnectDB();
   process.exit(0);
-});
+};
 
-process.on("SIGTERM", async () => {
-  await fastify.close();
-  process.exit(0);
-});
+process.on("SIGINT", () => handleShutdown("SIGINT"));
+process.on("SIGTERM", () => handleShutdown("SIGTERM"));
 
 start();
