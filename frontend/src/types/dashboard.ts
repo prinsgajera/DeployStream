@@ -5,8 +5,11 @@ export interface RepositoryItem {
   repoName: string;
   fullName: string;
   githubRepoId: string;
+  subdomain: string;
   branch: string;
   framework: string;
+  buildCommand: string;
+  outputDirectory: string;
   status: "active" | "inactive" | "building";
   lastDeployed: string;
   commitHash: string;
@@ -14,6 +17,10 @@ export interface RepositoryItem {
   autoDeploy: boolean;
   latencyMs: number;
   environment: string;
+  isActive: boolean;
+  s3BucketUrl?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface BuildHistoryItem {
@@ -39,11 +46,29 @@ export interface EnvironmentVariable {
 }
 
 export interface GitHubRepoOption {
-  id: string;
+  id: number;
   name: string;
-  fullName: string;
+  full_name: string;
   private: boolean;
-  defaultBranch: string;
+  default_branch: string;
+  updated_at: string;
+  language: string | null;
+  description: string | null;
+}
+
+export interface ImportedRepository {
+  id: string;
+  userId: string;
+  repoName: string;
+  fullName: string;
+  githubRepoId: string;
+  subdomain: string;
+  branch: string;
+  framework: string;
+  buildCommand: string;
+  outputDirectory: string;
+  isActive: boolean;
+  s3BucketUrl: string | null;
+  createdAt: string;
   updatedAt: string;
-  language: string;
 }

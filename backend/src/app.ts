@@ -6,6 +6,7 @@ import fastifyOAuth2, { type OAuth2Namespace } from "@fastify/oauth2";
 import { env } from "./config/env.js";
 import authPlugin from "./plugins/auth.plugin.js";
 import authRoutes from "./modules/auth/auth.routes.js";
+import repositoriesRoutes from "./modules/repositories/repositories.routes.js";
 
 declare module "fastify" {
   interface FastifyInstance {
@@ -24,7 +25,7 @@ async function app(fastify: FastifyInstance): Promise<void> {
 
   await fastify.register(fastifyOAuth2, {
     name: "githubOAuth2",
-    scope: ["read:user", "user:email"],
+    scope: ["read:user", "user:email", "repo"],
     credentials: {
       client: {
         id: env.GITHUB_CLIENT_ID,
@@ -38,6 +39,7 @@ async function app(fastify: FastifyInstance): Promise<void> {
 
   await fastify.register(authPlugin);
   await fastify.register(authRoutes);
+  await fastify.register(repositoriesRoutes);
 }
 
 export default fp(app, { name: "app" });

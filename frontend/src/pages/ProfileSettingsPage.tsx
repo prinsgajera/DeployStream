@@ -14,6 +14,7 @@ import {
   RefreshCw,
   Mail,
   Smartphone,
+  Settings as SettingsIcon,
 } from "lucide-react";
 
 interface ApiKeyItem {
@@ -88,13 +89,27 @@ export const ProfileSettingsPage: React.FC = () => {
       <Sidebar />
       <Header />
 
-      <main className="pl-64 pt-16 min-h-screen w-full bg-zinc-950 px-8 py-6">
-        <div className="max-w-5xl mx-auto space-y-6">
+      <main className="ml-64 pt-16 min-h-screen bg-zinc-950">
+        <div className="p-6 md:p-8 max-w-7xl mx-auto flex flex-col gap-6">
           
-          {/* Header Title */}
-          <div>
-            <h1 className="text-2xl font-bold text-zinc-100 tracking-tight">Account & Developer Settings</h1>
-            <p className="text-xs text-zinc-400 mt-1">Manage your profile, GitHub OAuth tokens, API access keys, and security preferences</p>
+          {/* Page Header */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-zinc-800/80">
+            <div>
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
+                  <SettingsIcon className="w-5 h-5" />
+                </div>
+                <h1 className="text-xl font-bold tracking-tight text-zinc-100">
+                  Account & Developer Settings
+                </h1>
+                <span className="px-2.5 py-0.5 rounded-full bg-zinc-900 border border-zinc-800 text-cyan-400 font-mono text-xs font-semibold">
+                  Profile Configured
+                </span>
+              </div>
+              <p className="text-xs text-zinc-400 mt-1">
+                Manage your profile details, GitHub OAuth tokens, API access keys, and security preferences.
+              </p>
+            </div>
           </div>
 
           {/* Navigation Tabs */}

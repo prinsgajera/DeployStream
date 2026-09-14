@@ -4,10 +4,9 @@ import {
   LayoutDashboard,
   FolderGit2,
   Rocket,
-  GitFork,
+  Globe,
   Settings,
   BookOpen,
-  ChevronDown,
   Terminal,
 } from "lucide-react";
 
@@ -36,21 +35,6 @@ export const Sidebar: React.FC = () => {
           </Link>
         </div>
 
-        {/* Environment Selector Dropdown */}
-        <div className="px-4 py-3 border-b border-zinc-800/60 bg-zinc-900/40">
-          <label className="block text-[10px] font-mono uppercase tracking-wider text-zinc-400 mb-1">
-            Environment
-          </label>
-          <div className="relative">
-            <select className="w-full appearance-none bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 pr-8 text-xs font-mono text-zinc-200 focus:outline-none focus:border-cyan-500 cursor-pointer">
-              <option value="prod">Production (us-east-1)</option>
-              <option value="staging">Staging (eu-central-1)</option>
-              <option value="sandbox">Dev Sandbox</option>
-            </select>
-            <ChevronDown className="w-4 h-4 absolute right-2.5 top-2 text-zinc-400 pointer-events-none" />
-          </div>
-        </div>
-
         {/* Navigation Section */}
         <div className="p-3 space-y-4">
           <div>
@@ -60,50 +44,35 @@ export const Sidebar: React.FC = () => {
             <nav className="flex flex-col gap-1">
               <Link
                 to="/dashboard"
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                  isActive("/dashboard")
-                    ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-semibold shadow-sm"
-                    : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100"
-                }`}
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all ${isActive("/dashboard")
+                  ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-semibold shadow-sm"
+                  : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100"
+                  }`}
               >
                 <LayoutDashboard className="w-4 h-4" />
                 <span>Dashboard</span>
               </Link>
 
               <Link
-                to="/dashboard?tab=repositories"
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                  isActive("/repositories")
-                    ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-semibold shadow-sm"
-                    : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100"
-                }`}
+                to="/repositories"
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all ${isActive("/repositories")
+                  ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-semibold shadow-sm"
+                  : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100"
+                  }`}
               >
                 <FolderGit2 className="w-4 h-4" />
                 <span>Repositories</span>
               </Link>
 
               <Link
-                to="/dashboard?tab=history"
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                  isActive("/deployments")
-                    ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-semibold shadow-sm"
-                    : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100"
-                }`}
+                to="/deployments"
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all ${isActive("/deployments")
+                  ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-semibold shadow-sm"
+                  : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100"
+                  }`}
               >
                 <Rocket className="w-4 h-4" />
                 <span>Deployments</span>
-              </Link>
-
-              <Link
-                to="/dashboard?tab=terminal"
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                  isActive("/pipelines")
-                    ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-semibold shadow-sm"
-                    : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100"
-                }`}
-              >
-                <GitFork className="w-4 h-4" />
-                <span>Pipelines</span>
               </Link>
             </nav>
           </div>
@@ -114,12 +83,21 @@ export const Sidebar: React.FC = () => {
             </span>
             <nav className="flex flex-col gap-1">
               <Link
+                to="/domains"
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all ${isActive("/domains")
+                  ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-semibold shadow-sm"
+                  : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100"
+                  }`}
+              >
+                <Globe className="w-4 h-4" />
+                <span>Domains</span>
+              </Link>
+              <Link
                 to="/settings"
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                  isActive("/settings")
-                    ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-semibold shadow-sm"
-                    : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100"
-                }`}
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all ${isActive("/settings")
+                  ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-semibold shadow-sm"
+                  : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100"
+                  }`}
               >
                 <Settings className="w-4 h-4" />
                 <span>Settings</span>
@@ -136,17 +114,6 @@ export const Sidebar: React.FC = () => {
               </a>
             </nav>
           </div>
-        </div>
-      </div>
-
-      {/* Cluster Live Footer Status */}
-      <div className="p-4 border-t border-zinc-800/80 bg-zinc-950">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-xs font-mono text-zinc-300">Cluster Live</span>
-          </div>
-          <span className="text-xs font-mono text-zinc-400">99.98%</span>
         </div>
       </div>
     </aside>
