@@ -18,9 +18,8 @@ import {
 } from "lucide-react";
 import type { GitHubRepoOption, EnvironmentVariable, ImportedRepository } from "../../types/dashboard";
 import { useGitHubRepos } from "../../hooks/useGitHubRepos";
-
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
-const SERVER_ROOT = API_BASE.replace(/\/api\/?$/, "");
+import { apiClient } from "../../lib/apiClient";
+import axios from "axios";
 
 interface ImportRepositoryModalProps {
   isOpen: boolean;
@@ -148,34 +147,20 @@ export const ImportRepositoryModal: React.FC<ImportRepositoryModalProps> = ({
     setImportError(null);
 
     try {
-      const response = await fetch(`${SERVER_ROOT}/api/repositories/import`, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({
-          githubRepoId: String(selectedRepo.id),
-          repoName: selectedRepo.name,
-          fullName: selectedRepo.full_name,
-          subdomain,
-          branch,
-          framework,
-          buildCommand,
-          outputDirectory,
-          envVars: envVars
-            .filter((v) => v.key.trim() !== "")
-            .map(({ key, value, isSecret }) => ({ key, value, isSecret })),
-        }),
+      const { data: imported } = await apiClient.post<ImportedRepository>("/api/repositories/import", {
+        githubRepoId: String(selectedRepo.id),
+        repoName: selectedRepo.name,
+        fullName: selectedRepo.full_name,
+        subdomain,
+        branch,
+        framework,
+        buildCommand,
+        outputDirectory,
+        envVars: envVars
+          .filter((v) => v.key.trim() !== "")
+          .map(({ key, value, isSecret }) => ({ key, value, isSecret })),
       });
 
-      if (!response.ok) {
-        const body = (await response.json()) as { message?: string };
-        throw new Error(body.message || "Import failed. Please try again.");
-      }
-
-      const imported = (await response.json()) as ImportedRepository;
       setImportSuccess(true);
 
       setTimeout(() => {
@@ -183,7 +168,10 @@ export const ImportRepositoryModal: React.FC<ImportRepositoryModalProps> = ({
         onClose();
       }, 1200);
     } catch (err) {
-      setImportError(err instanceof Error ? err.message : "Import failed.");
+      const message = axios.isAxiosError(err)
+        ? (err.response?.data as { message?: string })?.message ?? "Import failed. Please try again."
+        : "Import failed.";
+      setImportError(message);
     } finally {
       setIsImporting(false);
     }

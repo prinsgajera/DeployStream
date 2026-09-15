@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import type { ImportedRepository } from "../types/dashboard";
-
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
-const SERVER_ROOT = API_BASE.replace(/\/api\/?$/, "");
+import { apiClient } from "../lib/apiClient";
+import axios from "axios";
 
 interface UseUserRepositoriesResult {
   repositories: ImportedRepository[];
@@ -21,25 +20,12 @@ export function useUserRepositories(): UseUserRepositoriesResult {
     setError(null);
 
     try {
-      const response = await fetch(`${SERVER_ROOT}/api/repositories`, {
-        credentials: "include",
-        headers: { Accept: "application/json" },
-      });
-
-      if (response.status === 401) {
-        window.location.href = "/login";
-        return;
-      }
-
-      if (!response.ok) {
-        const body = (await response.json()) as { message?: string };
-        throw new Error(body.message || "Failed to fetch repositories");
-      }
-
-      const data = (await response.json()) as ImportedRepository[];
+      const { data } = await apiClient.get<ImportedRepository[]>("/api/repositories");
       setRepositories(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
+      if (!axios.isAxiosError(err) || err.response?.status !== 401) {
+        setError(err instanceof Error ? err.message : "Unknown error");
+      }
     } finally {
       setIsLoading(false);
     }

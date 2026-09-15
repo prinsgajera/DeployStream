@@ -3,9 +3,8 @@ import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { CheckCircle2, XCircle, Loader2, ArrowRight, RefreshCw, Terminal, User as UserIcon } from "lucide-react";
 import type { User } from "../types/auth";
-
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
-const SERVER_ROOT = API_BASE.replace(/\/api\/?$/, "");
+import { apiClient } from "../lib/apiClient";
+import axios from "axios";
 
 type CallbackStatus = "processing" | "success" | "error";
 
@@ -52,20 +51,13 @@ export const AuthCallbackPage: React.FC = () => {
     }
 
     if (code) {
-      // SPA Code exchange: call Fastify backend endpoint /api/auth/callback
       const exchangeCode = async () => {
         try {
-          const response = await fetch(`${SERVER_ROOT}/api/auth/callback?code=${encodeURIComponent(code)}`, {
-            method: "GET",
-            headers: {
-              Accept: "application/json",
-            },
-            credentials: "include",
-          });
+          const { data } = await apiClient.get<{ success?: boolean; user?: User; message?: string; error?: string }>(
+            `/api/auth/callback?code=${encodeURIComponent(code)}`
+          );
 
-          const data = (await response.json()) as { success?: boolean; user?: User; message?: string; error?: string };
-
-          if (response.ok && data.user) {
+          if (data.user) {
             setUser(data.user);
             setAuthenticatedUser(data.user);
             setStatus("success");
@@ -75,7 +67,12 @@ export const AuthCallbackPage: React.FC = () => {
           }
         } catch (err) {
           setStatus("error");
-          setErrorMessage(err instanceof Error ? err.message : "Network error during authentication.");
+          const message = axios.isAxiosError(err)
+            ? (err.response?.data as { message?: string })?.message ?? err.message
+            : err instanceof Error
+              ? err.message
+              : "Network error during authentication.";
+          setErrorMessage(message);
         }
       };
 
@@ -114,7 +111,7 @@ export const AuthCallbackPage: React.FC = () => {
       <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 py-12">
         <div className="w-full max-w-md mx-auto">
           <div className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800/80 rounded-2xl p-8 shadow-2xl shadow-black/80 text-center space-y-6">
-            
+
             {/* Status Indicator Icon */}
             {status === "processing" && (
               <div className="space-y-4">

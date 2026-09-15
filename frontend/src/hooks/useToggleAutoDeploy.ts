@@ -1,9 +1,6 @@
 import { useState, useCallback } from "react";
-
-const SERVER_ROOT = (import.meta.env.VITE_API_URL || "http://localhost:3001/api").replace(
-  /\/api\/?$/,
-  ""
-);
+import { apiClient } from "../lib/apiClient";
+import type { ImportedRepository } from "../types/dashboard";
 
 interface UseToggleAutoDeployResult {
   toggle: (repositoryId: string, currentValue: boolean) => Promise<void>;
@@ -25,19 +22,10 @@ export function useToggleAutoDeploy(
       setPendingIds((prev) => new Set(prev).add(repositoryId));
 
       try {
-        const response = await fetch(
-          `${SERVER_ROOT}/api/repositories/${repositoryId}/auto-deploy`,
-          {
-            method: "PATCH",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ autoDeploy: nextValue }),
-          }
+        await apiClient.patch<ImportedRepository>(
+          `/api/repositories/${repositoryId}/auto-deploy`,
+          { autoDeploy: nextValue }
         );
-
-        if (!response.ok) {
-          onRevert(repositoryId, currentValue);
-        }
       } catch {
         onRevert(repositoryId, currentValue);
       } finally {

@@ -1,9 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
 import type { User, AuthContextType } from "../types/auth";
-
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
-// Remove trailing /api if present to get server root when constructing full paths
-const SERVER_ROOT = API_BASE.replace(/\/api\/?$/, "");
+import { apiClient } from "../lib/apiClient";
+import axios from "axios";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -16,23 +14,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${SERVER_ROOT}/api/auth/me`, {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-        },
-        credentials: "include",
-      });
-
-      if (response.ok) {
-        const userData = (await response.json()) as User;
-        setUser(userData);
-      } else {
-        setUser(null);
-      }
+      const { data } = await apiClient.get<User>("/api/auth/me");
+      setUser(data);
     } catch (err) {
       setUser(null);
-      setError(err instanceof Error ? err.message : "Failed to authenticate");
+      if (!axios.isAxiosError(err) || err.response?.status !== 401) {
+        setError(err instanceof Error ? err.message : "Failed to authenticate");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -43,19 +31,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [checkAuth]);
 
   const loginWithGitHub = useCallback((): void => {
-    window.location.href = `${SERVER_ROOT}/auth/github`;
+    const authServerUrl = import.meta.env.VITE_SERVER_URL;
+    window.location.href = `${authServerUrl}/auth/github`;
   }, []);
 
   const logout = useCallback(async (): Promise<void> => {
     setIsLoading(true);
     try {
-      await fetch(`${SERVER_ROOT}/api/auth/logout`, {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-        },
-        credentials: "include",
-      });
+      await apiClient.post("/api/auth/logout");
       setUser(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Logout failed");
