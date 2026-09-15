@@ -275,11 +275,11 @@ export const ProfileSettingsPage: React.FC = () => {
               <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-800 space-y-3 font-mono text-xs text-zinc-300">
                 <div className="flex justify-between">
                   <span className="text-zinc-500">GitHub Username:</span>
-                  <span className="text-cyan-400 font-semibold">@{user?.username || "alex-dev"}</span>
+                  <span className="text-cyan-400 font-semibold">@{user?.username}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-zinc-500">GitHub User ID:</span>
-                  <span>{user?.githubId || "12984019"}</span>
+                  <span>{user?.githubId}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-zinc-500">OAuth Scopes Authorized:</span>

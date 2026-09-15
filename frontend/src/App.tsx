@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import { PublicRoute } from "./components/PublicRoute";
 import { LoginPage } from "./pages/LoginPage";
 import { AuthCallbackPage } from "./pages/AuthCallbackPage";
 import { DashboardPage } from "./pages/DashboardPage";
@@ -13,15 +15,24 @@ export function App() {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/auth/callback" element={<AuthCallbackPage />} />
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/repositories" element={<RepositoriesPage />} />
-          <Route path="/deployments" element={<DeploymentsPage />} />
-          <Route path="/domains" element={<DomainsPage />} />
-          <Route path="/settings" element={<ProfileSettingsPage />} />
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          {/* Public-only routes: redirect to /dashboard if already authenticated */}
+          <Route element={<PublicRoute />}>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/auth/callback" element={<AuthCallbackPage />} />
+          </Route>
+
+          {/* Protected routes: redirect to /login if not authenticated */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/repositories" element={<RepositoriesPage />} />
+            <Route path="/deployments" element={<DeploymentsPage />} />
+            <Route path="/domains" element={<DomainsPage />} />
+            <Route path="/settings" element={<ProfileSettingsPage />} />
+          </Route>
+
+          {/* Fallback: send unauthenticated traffic to login */}
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>
