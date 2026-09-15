@@ -6,18 +6,28 @@ export enum BuildStatus {
   BUILDING = "BUILDING",
   SUCCESS = "SUCCESS",
   FAILED = "FAILED",
+  CANCELLED = "CANCELLED",
 }
+
+export type BuildTrigger = "webhook" | "manual";
 
 export interface IBuild {
   id?: string;
   repositoryId: Types.ObjectId;
   status: BuildStatus;
-  commitHash?: string | null;
-  commitMessage?: string | null;
-  awsCodeBuildId?: string | null;
-  startedAt?: Date;
-  endedAt?: Date | null;
-  logsUrl?: string | null;
+  triggeredBy: BuildTrigger;
+  commitHash: string | null;
+  commitMessage: string | null;
+  commitAuthor: string | null;
+  branch: string | null;
+  awsCodeBuildId: string | null;
+  logGroupName: string | null;
+  logStreamName: string | null;
+  startedAt: Date;
+  endedAt: Date | null;
+  durationSeconds: number | null;
+  deployedUrl: string | null;
+  errorMessage: string | null;
 }
 
 export type IBuildDocument = IBuild & Document;
@@ -33,16 +43,18 @@ const buildSchema = new Schema<IBuildDocument>(
     status: {
       type: String,
       enum: Object.values(BuildStatus),
-      default: BuildStatus.IDLE,
+      default: BuildStatus.QUEUED,
+      index: true,
     },
-    commitHash: {
+    triggeredBy: {
       type: String,
-      default: null,
+      enum: ["webhook", "manual"] as const,
+      required: true,
     },
-    commitMessage: {
-      type: String,
-      default: null,
-    },
+    commitHash: { type: String, default: null },
+    commitMessage: { type: String, default: null },
+    commitAuthor: { type: String, default: null },
+    branch: { type: String, default: null },
     awsCodeBuildId: {
       type: String,
       default: null,
@@ -50,25 +62,21 @@ const buildSchema = new Schema<IBuildDocument>(
       sparse: true,
       index: true,
     },
-    startedAt: {
-      type: Date,
-      default: Date.now,
-    },
-    endedAt: {
-      type: Date,
-      default: null,
-    },
-    logsUrl: {
-      type: String,
-      default: null,
-    },
+    logGroupName: { type: String, default: null },
+    logStreamName: { type: String, default: null },
+    startedAt: { type: Date, default: Date.now },
+    endedAt: { type: Date, default: null },
+    durationSeconds: { type: Number, default: null },
+    deployedUrl: { type: String, default: null },
+    errorMessage: { type: String, default: null },
   },
   {
+    timestamps: true,
     toJSON: {
       transform(_doc, ret: Record<string, unknown>) {
-        ret['id'] = ret['_id'] ? String(ret['_id']) : undefined;
-        delete ret['_id'];
-        delete ret['__v'];
+        ret["id"] = ret["_id"] ? String(ret["_id"]) : undefined;
+        delete ret["_id"];
+        delete ret["__v"];
         return ret;
       },
     },

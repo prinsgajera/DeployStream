@@ -18,10 +18,14 @@ export interface IRepository {
   buildCommand: string;
   outputDirectory: string;
   envVars: IEnvVar[];
-  webhookId?: string | null;
+  webhookId: string | null;
   isActive: boolean;
   autoDeploy: boolean;
-  s3BucketUrl?: string | null;
+  s3BucketUrl: string | null;
+  deployedUrl: string | null;
+  lastDeployedAt: Date | null;
+  totalBuilds: number;
+  successfulBuilds: number;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -58,6 +62,10 @@ const repositorySchema = new Schema<IRepositoryDocument>(
     isActive: { type: Boolean, default: true },
     autoDeploy: { type: Boolean, default: true },
     s3BucketUrl: { type: String, default: null },
+    deployedUrl: { type: String, default: null },
+    lastDeployedAt: { type: Date, default: null },
+    totalBuilds: { type: Number, default: 0 },
+    successfulBuilds: { type: Number, default: 0 },
   },
   {
     timestamps: true,
