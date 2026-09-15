@@ -5,6 +5,7 @@ import {
   importRepository,
   getUserRepositories,
   deleteUserRepository,
+  updateAutoDeployStatus,
   type ImportRepositoryPayload,
 } from "./repositories.service.js";
 import { repositorySchemas } from "./repositories.schema.js";
@@ -23,6 +24,10 @@ interface ImportBody {
 
 interface RepoParams {
   id: string;
+}
+
+interface PatchAutoDeployBody {
+  autoDeploy: boolean;
 }
 
 async function repositoriesRoutes(fastify: FastifyInstance): Promise<void> {
@@ -153,6 +158,43 @@ async function repositoriesRoutes(fastify: FastifyInstance): Promise<void> {
         return reply.status(500).send({
           error: "Internal Server Error",
           message: "Failed to delete repository.",
+        });
+      }
+    }
+  );
+  fastify.patch<{ Params: RepoParams; Body: PatchAutoDeployBody }>(
+    "/api/repositories/:id/auto-deploy",
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        params: {
+          type: "object",
+          required: ["id"],
+          properties: { id: { type: "string" } },
+        },
+        body: repositorySchemas.patchAutoDeployBody,
+        response: { 200: repositorySchemas.repositoryResponse },
+      },
+    },
+    async (request, reply) => {
+      const { userId } = request.user as { userId: string };
+      const { id } = request.params;
+      const { autoDeploy } = request.body;
+
+      try {
+        const updated = await updateAutoDeployStatus(userId, id, autoDeploy);
+        if (!updated) {
+          return reply.status(404).send({
+            error: "Not Found",
+            message: "Repository not found.",
+          });
+        }
+        return reply.send(updated.toJSON());
+      } catch (err) {
+        fastify.log.error({ err }, "Failed to update auto-deploy status");
+        return reply.status(500).send({
+          error: "Internal Server Error",
+          message: "Failed to update auto-deploy status.",
         });
       }
     }

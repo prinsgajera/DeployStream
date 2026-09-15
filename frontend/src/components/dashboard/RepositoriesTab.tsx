@@ -15,7 +15,8 @@ import type { RepositoryItem } from "../../types/dashboard";
 interface RepositoriesTabProps {
   onOpenImportModal: () => void;
   repositories: RepositoryItem[];
-  onToggleAutoDeploy: (id: string) => void;
+  onToggleAutoDeploy: (id: string, currentValue: boolean) => void;
+  pendingToggleIds: Set<string>;
   isLoading?: boolean;
 }
 
@@ -50,6 +51,7 @@ export const RepositoriesTab: React.FC<RepositoriesTabProps> = ({
   onOpenImportModal,
   repositories,
   onToggleAutoDeploy,
+  pendingToggleIds,
   isLoading = false,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -132,13 +134,12 @@ export const RepositoriesTab: React.FC<RepositoriesTabProps> = ({
             return (
               <div
                 key={repo.id}
-                className="flex flex-col justify-between bg-zinc-900/70 border border-zinc-800/80 rounded-2xl p-6 shadow-sm hover:shadow-xl hover:border-zinc-700 transition-all group relative overflow-hidden"
+                className="flex flex-col justify-between bg-zinc-900/70 border border-zinc-800/80 rounded-2xl p-6 shadow-sm hover:shadow-xl hover:border-zinc-700 transition-all group relative overflow-hidden cursor-pointer"
               >
                 {/* Left Color Accent Bar */}
                 <div
-                  className={`absolute top-0 left-0 bottom-0 w-1 ${
-                    isActive ? "bg-emerald-400" : "bg-zinc-700"
-                  }`}
+                  className={`absolute top-0 left-0 bottom-0 w-1 ${isActive ? "bg-emerald-400" : "bg-zinc-700"
+                    }`}
                 />
 
                 <div className="flex flex-col gap-4">
@@ -160,24 +161,15 @@ export const RepositoriesTab: React.FC<RepositoriesTabProps> = ({
                     </div>
 
                     <span
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] uppercase font-mono font-semibold tracking-wider shrink-0 ${
-                        isActive
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] uppercase font-mono font-semibold tracking-wider shrink-0 ${isActive
                           ? "bg-emerald-950/60 text-emerald-400 border border-emerald-800/40"
                           : "bg-zinc-800 text-zinc-400 border border-zinc-700"
-                      }`}
+                        }`}
                     >
                       {isActive && <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />}
                       {isActive ? "active" : "inactive"}
                     </span>
                   </div>
-
-                  {/* Subdomain URL */}
-                  {repo.subdomain && (
-                    <div className="text-[11px] font-mono text-zinc-500 truncate">
-                      <span className="text-cyan-400/70">{repo.subdomain}</span>
-                      <span>.deploystream.io</span>
-                    </div>
-                  )}
 
                   {/* Recent Latency & Sparkline */}
                   <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-800/80 flex items-center justify-between">
@@ -216,11 +208,15 @@ export const RepositoriesTab: React.FC<RepositoriesTabProps> = ({
                     <Zap className={`w-3.5 h-3.5 ${repo.autoDeploy ? "text-emerald-400" : "text-zinc-500"}`} />
                     Auto-Deploy Trigger
                   </span>
-                  <label className="relative inline-flex items-center cursor-pointer">
+                  <label
+                    className={`relative inline-flex items-center ${pendingToggleIds.has(repo.id) ? "cursor-not-allowed opacity-50" : "cursor-pointer"
+                      }`}
+                  >
                     <input
                       type="checkbox"
                       checked={repo.autoDeploy ?? false}
-                      onChange={() => onToggleAutoDeploy(repo.id)}
+                      onChange={() => onToggleAutoDeploy(repo.id, repo.autoDeploy)}
+                      disabled={pendingToggleIds.has(repo.id)}
                       className="sr-only peer"
                     />
                     <div className="w-9 h-5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-400" />

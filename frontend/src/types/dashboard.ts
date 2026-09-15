@@ -68,6 +68,7 @@ export interface ImportedRepository {
   buildCommand: string;
   outputDirectory: string;
   isActive: boolean;
+  autoDeploy: boolean;
   s3BucketUrl: string | null;
   createdAt: string;
   updatedAt: string;

@@ -20,6 +20,7 @@ export interface IRepository {
   envVars: IEnvVar[];
   webhookId?: string | null;
   isActive: boolean;
+  autoDeploy: boolean;
   s3BucketUrl?: string | null;
   createdAt?: Date;
   updatedAt?: Date;
@@ -55,6 +56,7 @@ const repositorySchema = new Schema<IRepositoryDocument>(
     envVars: { type: [envVarSchema], default: [] },
     webhookId: { type: String, default: null },
     isActive: { type: Boolean, default: true },
+    autoDeploy: { type: Boolean, default: true },
     s3BucketUrl: { type: String, default: null },
   },
   {

@@ -106,3 +106,15 @@ export async function deleteUserRepository(
   });
   return result.deletedCount === 1;
 }
+
+export async function updateAutoDeployStatus(
+  userId: string,
+  repositoryId: string,
+  autoDeploy: boolean
+): Promise<IRepositoryDocument | null> {
+  return RepositoryModel.findOneAndUpdate(
+    { _id: repositoryId, userId: new Types.ObjectId(userId) },
+    { $set: { autoDeploy } },
+    { new: true }
+  ).select("-envVars.value");
+}

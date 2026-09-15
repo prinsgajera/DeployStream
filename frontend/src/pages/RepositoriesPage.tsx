@@ -4,7 +4,8 @@ import { Header } from "../components/layout/Header";
 import { RepositoriesTab } from "../components/dashboard/RepositoriesTab";
 import { ImportRepositoryModal } from "../components/dashboard/ImportRepositoryModal";
 import { useUserRepositories } from "../hooks/useUserRepositories";
-import { FolderGit2, Plus } from "lucide-react";
+import { useToggleAutoDeploy } from "../hooks/useToggleAutoDeploy";
+import { FolderGit2 } from "lucide-react";
 import type { RepositoryItem, ImportedRepository } from "../types/dashboard";
 
 function mapImportedToRepositoryItem(repo: ImportedRepository): RepositoryItem {
@@ -20,10 +21,10 @@ function mapImportedToRepositoryItem(repo: ImportedRepository): RepositoryItem {
     outputDirectory: repo.outputDirectory,
     status: repo.isActive ? "active" : "inactive",
     isActive: repo.isActive,
+    autoDeploy: repo.autoDeploy,
     lastDeployed: "Just now",
     commitHash: "7a9f2c1",
     commitMessage: "Initial deployment from GitHub",
-    autoDeploy: true,
     latencyMs: Math.floor(Math.random() * 40) + 15,
     environment: "Production",
     s3BucketUrl: repo.s3BucketUrl,
@@ -34,21 +35,34 @@ function mapImportedToRepositoryItem(repo: ImportedRepository): RepositoryItem {
 
 export const RepositoriesPage: React.FC = () => {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  const [autoDeploys, setAutoDeploys] = useState<Record<string, boolean>>({});
+  const [autoDeployOverrides, setAutoDeployOverrides] = useState<Record<string, boolean>>({});
 
   const { repositories: importedRepos, isLoading: reposLoading, refetch } = useUserRepositories();
 
+  const handleOptimisticUpdate = useCallback((id: string, value: boolean) => {
+    setAutoDeployOverrides((prev) => ({ ...prev, [id]: value }));
+  }, []);
+
+  const handleRevert = useCallback((id: string, originalValue: boolean) => {
+    setAutoDeployOverrides((prev) => ({ ...prev, [id]: originalValue }));
+  }, []);
+
+  const { toggle, pendingIds } = useToggleAutoDeploy(handleOptimisticUpdate, handleRevert);
+
   const repositories: RepositoryItem[] = importedRepos.map((repo) => {
     const mapped = mapImportedToRepositoryItem(repo);
-    if (autoDeploys[repo.id] !== undefined) {
-      mapped.autoDeploy = autoDeploys[repo.id]!;
+    if (autoDeployOverrides[repo.id] !== undefined) {
+      mapped.autoDeploy = autoDeployOverrides[repo.id]!;
     }
     return mapped;
   });
 
-  const handleToggleAutoDeploy = useCallback((id: string) => {
-    setAutoDeploys((prev) => ({ ...prev, [id]: !(prev[id] ?? true) }));
-  }, []);
+  const handleToggleAutoDeploy = useCallback(
+    (id: string, currentValue: boolean) => {
+      void toggle(id, currentValue);
+    },
+    [toggle]
+  );
 
   const handleImportComplete = useCallback(
     (_repo: ImportedRepository) => {
@@ -64,7 +78,6 @@ export const RepositoriesPage: React.FC = () => {
 
       <main className="ml-64 pt-16 min-h-screen bg-zinc-950">
         <div className="p-6 md:p-8 max-w-7xl mx-auto flex flex-col gap-6">
-          {/* Page Header */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-zinc-800/80">
             <div>
               <div className="flex items-center gap-3">
@@ -84,11 +97,11 @@ export const RepositoriesPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Repositories Tab Content */}
           <RepositoriesTab
             onOpenImportModal={() => setIsImportModalOpen(true)}
             repositories={repositories}
             onToggleAutoDeploy={handleToggleAutoDeploy}
+            pendingToggleIds={pendingIds}
             isLoading={reposLoading}
           />
         </div>

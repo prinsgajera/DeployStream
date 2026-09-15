@@ -74,9 +74,18 @@ export const repositorySchemas = {
       buildCommand: { type: "string" },
       outputDirectory: { type: "string" },
       isActive: { type: "boolean" },
+      autoDeploy: { type: "boolean" },
       s3BucketUrl: { type: ["string", "null"] },
       createdAt: { type: "string" },
       updatedAt: { type: "string" },
+    },
+  },
+
+  patchAutoDeployBody: {
+    type: "object",
+    required: ["autoDeploy"],
+    properties: {
+      autoDeploy: { type: "boolean" },
     },
   },
 };
