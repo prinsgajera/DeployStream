@@ -12,7 +12,6 @@ import {
   Box,
   Copy,
   Info,
-  Sparkles,
 } from "lucide-react";
 
 interface DomainConfig {

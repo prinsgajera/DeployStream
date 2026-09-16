@@ -18,7 +18,7 @@ async function webhooksRoutes(fastify: FastifyInstance): Promise<void> {
             },
           },
         },
-      },
+      }, 
     },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const signatureHeader = request.headers["x-hub-signature-256"] as string | undefined;

@@ -15,7 +15,6 @@ import {
   Zap,
   Activity,
   Clock,
-  ShieldCheck,
 } from "lucide-react";
 import type { BuildHistoryItem } from "../types/dashboard";
 
