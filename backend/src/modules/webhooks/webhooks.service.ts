@@ -3,7 +3,7 @@ import { RepositoryModel } from "../../models/repository.model.js";
 import { triggerBuild } from "../builds/builds.service.js";
 import { env } from "../../config/env.js";
 
-interface GitHubPushPayload {
+export interface GitHubPushPayload {
   ref: string;
   after: string;
   head_commit?: {
@@ -17,7 +17,7 @@ interface GitHubPushPayload {
 }
 
 export function verifyGitHubSignature(
-  rawBody: Buffer,
+  rawBody: Buffer | string,
   signatureHeader: string | undefined
 ): boolean {
   if (!signatureHeader) return false;
@@ -43,7 +43,7 @@ export async function handlePushEvent(
   const commitHash = payload.after;
   const commitMessage = payload.head_commit?.message ?? null;
   const commitAuthor = payload.head_commit?.author?.name ?? null;
-  const githubRepoId = String(payload.repository?.id);
+  const githubRepoId = payload.repository?.id !== undefined ? String(payload.repository.id) : null;
 
   if (!branch || !githubRepoId) {
     return { triggered: false };

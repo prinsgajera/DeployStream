@@ -12,7 +12,18 @@ const githubRepoItemSchema = {
   },
 } as const;
 
+const errorResponseSchema = {
+  type: "object",
+  required: ["error", "message"],
+  properties: {
+    error: { type: "string" },
+    message: { type: "string" },
+  },
+} as const;
+
 export const repositorySchemas = {
+  errorResponse: errorResponseSchema,
+
   listGitHubReposResponse: {
     type: "array",
     items: githubRepoItemSchema,

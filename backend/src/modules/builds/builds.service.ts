@@ -1,17 +1,22 @@
 import { Types } from "mongoose";
 import { BuildModel, BuildStatus, type IBuildDocument } from "../../models/build.model.js";
 import { RepositoryModel } from "../../models/repository.model.js";
+import { UserModel } from "../../models/user.model.js";
+import { decryptToken } from "../../lib/crypto.js";
+import { decryptSecretEnvVars } from "../repositories/env-vars.js";
 import { startCodeBuild, stopCodeBuild, getCodeBuildStatus } from "../../services/codebuild.service.js";
 import { buildDeployedUrl } from "../../services/s3.service.js";
 import type { BuildTrigger } from "../../models/build.model.js";
+
+const TERMINAL_STATUSES: BuildStatus[] = [BuildStatus.SUCCESS, BuildStatus.FAILED, BuildStatus.CANCELLED];
 
 export interface TriggerBuildParams {
   repositoryId: string;
   userId: string;
   triggeredBy: BuildTrigger;
-  commitHash?: string | null;
-  commitMessage?: string | null;
-  commitAuthor?: string | null;
+  commitHash?: string | null | undefined;
+  commitMessage?: string | null | undefined;
+  commitAuthor?: string | null | undefined;
 }
 
 export async function triggerBuild(params: TriggerBuildParams): Promise<IBuildDocument> {
@@ -22,6 +27,13 @@ export async function triggerBuild(params: TriggerBuildParams): Promise<IBuildDo
 
   if (!repository) {
     const err = new Error("Repository not found") as NodeJS.ErrnoException;
+    err.code = "NOT_FOUND";
+    throw err;
+  }
+
+  const owner = await UserModel.findById(repository.userId).select("githubToken");
+  if (!owner) {
+    const err = new Error("Repository owner not found") as NodeJS.ErrnoException;
     err.code = "NOT_FOUND";
     throw err;
   }
@@ -46,6 +58,8 @@ export async function triggerBuild(params: TriggerBuildParams): Promise<IBuildDo
         buildCommand: repository.buildCommand,
         outputDirectory: repository.outputDirectory,
         commitHash: params.commitHash,
+        githubToken: decryptToken(owner.githubToken),
+        userEnvVars: decryptSecretEnvVars(repository.envVars),
       });
 
       await BuildModel.findByIdAndUpdate(build._id, {
@@ -74,7 +88,7 @@ export async function syncBuildStatus(buildId: string): Promise<IBuildDocument |
   const build = await BuildModel.findById(buildId);
   if (!build?.awsCodeBuildId) return build;
 
-  if (build.status === BuildStatus.SUCCESS || build.status === BuildStatus.FAILED || build.status === BuildStatus.CANCELLED) {
+  if (TERMINAL_STATUSES.includes(build.status)) {
     return build;
   }
 
@@ -91,38 +105,50 @@ export async function syncBuildStatus(buildId: string): Promise<IBuildDocument |
   };
 
   const newStatus = phaseMap[awsBuild.buildStatus ?? ""] ?? build.status;
-  const isTerminal = [BuildStatus.SUCCESS, BuildStatus.FAILED, BuildStatus.CANCELLED].includes(newStatus);
+  const isTerminal = TERMINAL_STATUSES.includes(newStatus);
 
-  const endedAt = isTerminal ? (awsBuild.endTime ?? new Date()) : null;
-  const durationSeconds = isTerminal && awsBuild.startTime && awsBuild.endTime
-    ? Math.round((awsBuild.endTime.getTime() - awsBuild.startTime.getTime()) / 1000)
+  if (!isTerminal) {
+    return BuildModel.findOneAndUpdate(
+      { _id: build._id, status: { $nin: TERMINAL_STATUSES } },
+      { status: newStatus },
+      { new: true }
+    ).then((updated) => updated ?? BuildModel.findById(build._id));
+  }
+
+  const endedAt = awsBuild.endTime ?? new Date();
+  const durationSeconds = awsBuild.startTime
+    ? Math.round((endedAt.getTime() - awsBuild.startTime.getTime()) / 1000)
     : null;
 
-  const deployedUrl = newStatus === BuildStatus.SUCCESS
-    ? buildDeployedUrl(build.repositoryId.toString())
+  const repository = await RepositoryModel.findById(build.repositoryId).select("subdomain");
+  const deployedUrl = newStatus === BuildStatus.SUCCESS && repository
+    ? buildDeployedUrl(repository.subdomain)
     : null;
 
-  const updated = await BuildModel.findByIdAndUpdate(
-    build._id,
-    {
-      status: newStatus,
-      endedAt,
-      durationSeconds,
-      deployedUrl,
-      errorMessage: awsBuild.buildStatus === "FAILED" ? (awsBuild.phases?.find(p => p.phaseStatus === "FAILED")?.phaseType ?? null) : null,
-    },
+  const failedPhase = awsBuild.phases?.find((phase) => phase.phaseStatus === "FAILED");
+  const errorMessage = newStatus === BuildStatus.FAILED
+    ? failedPhase?.contexts?.[0]?.message ?? failedPhase?.phaseType ?? awsBuild.buildStatus ?? null
+    : null;
+
+  const finalized = await BuildModel.findOneAndUpdate(
+    { _id: build._id, status: { $nin: TERMINAL_STATUSES } },
+    { status: newStatus, endedAt, durationSeconds, deployedUrl, errorMessage },
     { new: true }
   );
 
-  if (newStatus === BuildStatus.SUCCESS && updated) {
+  if (!finalized) {
+    return BuildModel.findById(build._id);
+  }
+
+  if (newStatus === BuildStatus.SUCCESS && deployedUrl) {
     await RepositoryModel.findByIdAndUpdate(build.repositoryId, {
-      deployedUrl: buildDeployedUrl(updated.repositoryId.toString()),
+      deployedUrl,
       lastDeployedAt: endedAt,
       $inc: { successfulBuilds: 1 },
     });
   }
 
-  return updated;
+  return finalized;
 }
 
 export async function cancelBuild(buildId: string, userId: string): Promise<IBuildDocument | null> {

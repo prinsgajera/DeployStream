@@ -2,10 +2,8 @@ import type { FastifyInstance } from "fastify";
 import fp from "fastify-plugin";
 import fastifyWebSocket from "@fastify/websocket";
 import { BuildModel, BuildStatus } from "../models/build.model.js";
-import { RepositoryModel } from "../models/repository.model.js";
 import { getLogEvents, waitForLogStream } from "../services/cloudwatch.service.js";
-import { syncBuildStatus } from "../modules/builds/builds.service.js";
-import { Types } from "mongoose";
+import { getBuildById, syncBuildStatus } from "../modules/builds/builds.service.js";
 
 const POLL_INTERVAL_MS = 2500;
 const TERMINAL_STATUSES = new Set([BuildStatus.SUCCESS, BuildStatus.FAILED, BuildStatus.CANCELLED]);
@@ -21,10 +19,11 @@ async function websocketPlugin(fastify: FastifyInstance): Promise<void> {
   await fastify.register(fastifyWebSocket);
 
   fastify.get(
-    "/api/builds/:buildId/stream",
-    { websocket: true },
+    "/builds/:buildId/stream",
+    { websocket: true, preValidation: [fastify.authenticate] },
     async (socket, request) => {
       const { buildId } = request.params as { buildId: string };
+      const { userId } = request.user;
 
       const send = (frame: LogFrame): void => {
         if (socket.readyState === socket.OPEN) {
@@ -32,7 +31,7 @@ async function websocketPlugin(fastify: FastifyInstance): Promise<void> {
         }
       };
 
-      const build = await BuildModel.findById(buildId);
+      const build = await getBuildById(buildId, userId);
       if (!build) {
         send({ type: "error", message: "Build not found" });
         socket.close();

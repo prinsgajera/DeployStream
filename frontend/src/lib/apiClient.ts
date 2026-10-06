@@ -1,13 +1,16 @@
 import axios from "axios";
+import { tokenStorage } from "./tokenStorage";
 
-const SERVER_URL = import.meta.env.VITE_SERVER_URL || "http://localhost:3001";
+export const API_BASE_URL: string = import.meta.env.VITE_API_URL ?? "http://localhost:3001/api";
 
 const PUBLIC_PATHS = ["/login", "/auth/callback"];
+const SESSION_CHECK_PATH = "/auth/me";
 
-const isPublicPage = () => PUBLIC_PATHS.some((p) => window.location.pathname.startsWith(p));
+const isPublicPage = (): boolean =>
+  PUBLIC_PATHS.some((path) => window.location.pathname.startsWith(path));
 
 export const apiClient = axios.create({
-  baseURL: SERVER_URL,
+  baseURL: API_BASE_URL,
   withCredentials: true,
   headers: {
     Accept: "application/json",
@@ -15,12 +18,21 @@ export const apiClient = axios.create({
   },
 });
 
+apiClient.interceptors.request.use((config) => {
+  const token = tokenStorage.get();
+  console.log(token)
+  if (token) {
+    config.headers.set("Authorization", `Bearer ${token}`);
+  }
+  return config;
+});
+
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
+  (error: unknown) => {
     if (axios.isAxiosError(error) && error.response?.status === 401) {
-      const requestUrl = error.config?.url ?? "";
-      const isSessionCheck = requestUrl.includes("/auth/me");
+      tokenStorage.clear();
+      const isSessionCheck = (error.config?.url ?? "").includes(SESSION_CHECK_PATH);
 
       if (!isSessionCheck && !isPublicPage()) {
         window.location.href = "/login";

@@ -3,6 +3,7 @@ import Fastify from "fastify";
 import { env } from "./config/env.js";
 import { connectDB, disconnectDB } from "./lib/db.js";
 import app from "./app.js";
+import { startBuildPoller } from "./services/build-poller.service.js";
 
 const fastify = Fastify({
   logger:
@@ -19,25 +20,13 @@ const fastify = Fastify({
 
 fastify.register(app);
 
-fastify.get("/health", {
-  schema: {
-    response: {
-      200: {
-        type: "object",
-        properties: {
-          status: { type: "string" },
-          timestamp: { type: "string" },
-        },
-      },
-    },
-  },
-  handler: async () => ({ status: "ok", timestamp: new Date().toISOString() }),
-});
+let stopBuildPoller: (() => void) | null = null;
 
 const start = async (): Promise<void> => {
   try {
     await connectDB();
     await fastify.listen({ port: env.PORT, host: env.HOST });
+    stopBuildPoller = startBuildPoller(fastify.log);
     fastify.log.info(`🚀 DeployStream API running at http://${env.HOST}:${env.PORT}`);
   } catch (err) {
     fastify.log.error(err);
@@ -47,6 +36,7 @@ const start = async (): Promise<void> => {
 
 const handleShutdown = async (signal: string) => {
   fastify.log.info(`Received ${signal}. Shutting down gracefully...`);
+  stopBuildPoller?.();
   await fastify.close();
   await disconnectDB();
   process.exit(0);

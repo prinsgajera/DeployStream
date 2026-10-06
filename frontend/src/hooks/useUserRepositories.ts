@@ -20,7 +20,7 @@ export function useUserRepositories(): UseUserRepositoriesResult {
     setError(null);
 
     try {
-      const { data } = await apiClient.get<ImportedRepository[]>("/api/repositories");
+      const { data } = await apiClient.get<ImportedRepository[]>("/repositories");
       setRepositories(data);
     } catch (err) {
       if (!axios.isAxiosError(err) || err.response?.status !== 401) {

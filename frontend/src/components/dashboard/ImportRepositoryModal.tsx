@@ -147,7 +147,7 @@ export const ImportRepositoryModal: React.FC<ImportRepositoryModalProps> = ({
     setImportError(null);
 
     try {
-      const { data: imported } = await apiClient.post<ImportedRepository>("/api/repositories/import", {
+      const { data: imported } = await apiClient.post<ImportedRepository>("/repositories/import", {
         githubRepoId: String(selectedRepo.id),
         repoName: selectedRepo.name,
         fullName: selectedRepo.full_name,

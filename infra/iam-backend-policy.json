@@ -1,0 +1,30 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "RunAndTrackBuilds",
+      "Effect": "Allow",
+      "Action": ["codebuild:StartBuild", "codebuild:StopBuild", "codebuild:BatchGetBuilds"],
+      "Resource": "arn:aws:codebuild:us-east-1:<ACCOUNT_ID>:project/deploystream-build-runner"
+    },
+    {
+      "Sid": "ReadBuildLogs",
+      "Effect": "Allow",
+      "Action": ["logs:GetLogEvents", "logs:DescribeLogStreams"],
+      "Resource": "arn:aws:logs:us-east-1:<ACCOUNT_ID>:log-group:/aws/codebuild/deploystream-build-runner:*"
+    },
+    {
+      "Sid": "ListSiteFiles",
+      "Effect": "Allow",
+      "Action": ["s3:ListBucket"],
+      "Resource": "arn:aws:s3:::deploystream-client-builds",
+      "Condition": { "StringLike": { "s3:prefix": ["builds/*"] } }
+    },
+    {
+      "Sid": "DeleteSiteFiles",
+      "Effect": "Allow",
+      "Action": ["s3:DeleteObject"],
+      "Resource": "arn:aws:s3:::deploystream-client-builds/builds/*"
+    }
+  ]
+}

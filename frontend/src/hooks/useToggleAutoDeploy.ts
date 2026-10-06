@@ -23,7 +23,7 @@ export function useToggleAutoDeploy(
 
       try {
         await apiClient.patch<ImportedRepository>(
-          `/api/repositories/${repositoryId}/auto-deploy`,
+          `/repositories/${repositoryId}/auto-deploy`,
           { autoDeploy: nextValue }
         );
       } catch {

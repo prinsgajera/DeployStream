@@ -4,14 +4,14 @@ import { useAuth } from "../hooks/useAuth";
 import { CheckCircle2, XCircle, Loader2, ArrowRight, RefreshCw, Terminal, User as UserIcon } from "lucide-react";
 import type { User } from "../types/auth";
 import { apiClient } from "../lib/apiClient";
-import axios from "axios";
+import { tokenStorage } from "../lib/tokenStorage";
 
 type CallbackStatus = "processing" | "success" | "error";
 
 export const AuthCallbackPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { setUser, checkAuth } = useAuth();
+  const { setUser } = useAuth();
 
   const [status, setStatus] = useState<CallbackStatus>("processing");
   const [errorMessage, setErrorMessage] = useState<string>("");
@@ -23,9 +23,8 @@ export const AuthCallbackPage: React.FC = () => {
     if (processedRef.current) return;
     processedRef.current = true;
 
-    const code = searchParams.get("code");
     const errorParam = searchParams.get("error");
-    const successParam = searchParams.get("success");
+    const token = new URLSearchParams(window.location.hash.slice(1)).get("token");
 
     if (errorParam) {
       setStatus("error");
@@ -37,58 +36,30 @@ export const AuthCallbackPage: React.FC = () => {
       return;
     }
 
-    if (successParam === "true") {
-      // Backend redirected here after setting cookie
-      checkAuth()
-        .then(() => {
-          setStatus("success");
-        })
-        .catch(() => {
-          setStatus("error");
-          setErrorMessage("Failed to verify authentication session.");
-        });
+    if (!token) {
+      setStatus("error");
+      setErrorMessage("No authentication token found in redirect.");
       return;
     }
 
-    if (code) {
-      const exchangeCode = async () => {
-        try {
-          const { data } = await apiClient.get<{ success?: boolean; user?: User; message?: string; error?: string }>(
-            `/api/auth/callback?code=${encodeURIComponent(code)}`
-          );
+    console.log("token found", token)
 
-          if (data.user) {
-            setUser(data.user);
-            setAuthenticatedUser(data.user);
-            setStatus("success");
-          } else {
-            setStatus("error");
-            setErrorMessage(data.message || data.error || "Failed to complete authentication exchange.");
-          }
-        } catch (err) {
-          setStatus("error");
-          const message = axios.isAxiosError(err)
-            ? (err.response?.data as { message?: string })?.message ?? err.message
-            : err instanceof Error
-              ? err.message
-              : "Network error during authentication.";
-          setErrorMessage(message);
-        }
-      };
+    tokenStorage.set(token);
+    window.history.replaceState(null, "", window.location.pathname);
 
-      exchangeCode();
-    } else {
-      // Fallback: test if user is already authenticated
-      checkAuth()
-        .then(() => {
-          setStatus("success");
-        })
-        .catch(() => {
-          setStatus("error");
-          setErrorMessage("No authorization code found in redirect parameters.");
-        });
-    }
-  }, [searchParams, setUser, checkAuth]);
+    // apiClient
+    //   .get<User>("/auth/me")
+    //   .then(({ data }) => {
+    //     setUser(data);
+    //     setAuthenticatedUser(data);
+    //     setStatus("success");
+    //   })
+    //   .catch(() => {
+    //     tokenStorage.clear();
+    //     setStatus("error");
+    //     setErrorMessage("Failed to verify authentication session.");
+    //   });
+  }, [searchParams, setUser]);
 
   return (
     <div className="min-h-screen w-full bg-zinc-950 text-zinc-50 flex flex-col justify-between selection:bg-zinc-800 font-sans relative overflow-hidden">

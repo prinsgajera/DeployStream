@@ -3,10 +3,11 @@ import fp from "fastify-plugin";
 import fastifyCors from "@fastify/cors";
 import fastifyCookie from "@fastify/cookie";
 import fastifyOAuth2, { type OAuth2Namespace } from "@fastify/oauth2";
+import fastifyRawBody from "fastify-raw-body";
 import { env } from "./config/env.js";
+import { API_PREFIX } from "./config/constants.js";
+import { apiRoutes } from "./routes/index.js";
 import authPlugin from "./plugins/auth.plugin.js";
-import authRoutes from "./modules/auth/auth.routes.js";
-import repositoriesRoutes from "./modules/repositories/repositories.routes.js";
 
 declare module "fastify" {
   interface FastifyInstance {
@@ -19,6 +20,7 @@ async function app(fastify: FastifyInstance): Promise<void> {
     origin: env.FRONTEND_URL,
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   });
 
   await fastify.register(fastifyCookie);
@@ -33,13 +35,18 @@ async function app(fastify: FastifyInstance): Promise<void> {
       },
       auth: fastifyOAuth2.GITHUB_CONFIGURATION,
     },
-    startRedirectPath: "/auth/github",
     callbackUri: env.GITHUB_CALLBACK_URL,
   });
 
+  await fastify.register(fastifyRawBody, {
+    field: "rawBody",
+    global: false,
+    encoding: false,
+    runFirst: true,
+  });
+
   await fastify.register(authPlugin);
-  await fastify.register(authRoutes);
-  await fastify.register(repositoriesRoutes);
+  await fastify.register(apiRoutes, { prefix: API_PREFIX });
 }
 
 export default fp(app, { name: "app" });

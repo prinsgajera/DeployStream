@@ -32,11 +32,14 @@ interface PatchAutoDeployBody {
 
 async function repositoriesRoutes(fastify: FastifyInstance): Promise<void> {
   fastify.get(
-    "/api/github/repos",
+    "/github/repos",
     {
       preHandler: [fastify.authenticate],
       schema: {
-        response: { 200: repositorySchemas.listGitHubReposResponse },
+        response: {
+          200: repositorySchemas.listGitHubReposResponse,
+          502: repositorySchemas.errorResponse,
+        },
       },
     },
     async (request, reply) => {
@@ -56,7 +59,7 @@ async function repositoriesRoutes(fastify: FastifyInstance): Promise<void> {
   );
 
   fastify.post<{ Body: ImportBody }>(
-    "/api/repositories/import",
+    "/repositories/import",
     {
       preHandler: [fastify.authenticate],
       schema: {
@@ -69,7 +72,7 @@ async function repositoriesRoutes(fastify: FastifyInstance): Promise<void> {
       const payload = request.body as ImportRepositoryPayload;
 
       try {
-        const repository = await importRepository(userId, payload);
+        const repository = await importRepository(userId, payload, request.log);
         return reply.status(201).send(repository.toJSON());
       } catch (err) {
         const error = err as NodeJS.ErrnoException;
@@ -98,7 +101,7 @@ async function repositoriesRoutes(fastify: FastifyInstance): Promise<void> {
   );
 
   fastify.get(
-    "/api/repositories",
+    "/repositories",
     {
       preHandler: [fastify.authenticate],
       schema: {
@@ -107,6 +110,7 @@ async function repositoriesRoutes(fastify: FastifyInstance): Promise<void> {
             type: "array",
             items: repositorySchemas.repositoryResponse,
           },
+          500: repositorySchemas.errorResponse,
         },
       },
     },
@@ -126,7 +130,7 @@ async function repositoriesRoutes(fastify: FastifyInstance): Promise<void> {
   );
 
   fastify.delete<{ Params: RepoParams }>(
-    "/api/repositories/:id",
+    "/repositories/:id",
     {
       preHandler: [fastify.authenticate],
       schema: {
@@ -145,7 +149,7 @@ async function repositoriesRoutes(fastify: FastifyInstance): Promise<void> {
       const { id } = request.params;
 
       try {
-        const deleted = await deleteUserRepository(userId, id);
+        const deleted = await deleteUserRepository(userId, id, request.log);
         if (!deleted) {
           return reply.status(404).send({
             error: "Not Found",
@@ -163,7 +167,7 @@ async function repositoriesRoutes(fastify: FastifyInstance): Promise<void> {
     }
   );
   fastify.patch<{ Params: RepoParams; Body: PatchAutoDeployBody }>(
-    "/api/repositories/:id/auto-deploy",
+    "/repositories/:id/auto-deploy",
     {
       preHandler: [fastify.authenticate],
       schema: {

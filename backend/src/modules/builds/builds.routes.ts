@@ -21,7 +21,7 @@ interface LogsQuery { nextToken?: string; }
 
 async function buildsRoutes(fastify: FastifyInstance): Promise<void> {
   fastify.get(
-    "/api/builds",
+    "/builds",
     {
       preHandler: [fastify.authenticate],
       schema: {
@@ -38,7 +38,7 @@ async function buildsRoutes(fastify: FastifyInstance): Promise<void> {
   );
 
   fastify.get<{ Params: RepoParams }>(
-    "/api/builds/repo/:repositoryId",
+    "/builds/repo/:repositoryId",
     {
       preHandler: [fastify.authenticate],
       schema: {
@@ -61,7 +61,7 @@ async function buildsRoutes(fastify: FastifyInstance): Promise<void> {
   );
 
   fastify.get<{ Params: BuildParams; Querystring: LogsQuery }>(
-    "/api/builds/:buildId/logs",
+    "/builds/:buildId/logs",
     {
       preHandler: [fastify.authenticate],
       schema: {
@@ -97,7 +97,7 @@ async function buildsRoutes(fastify: FastifyInstance): Promise<void> {
   );
 
   fastify.post<{ Params: RepoParams; Body: TriggerBody }>(
-    "/api/builds/repo/:repositoryId/trigger",
+    "/builds/repo/:repositoryId/trigger",
     {
       preHandler: [fastify.authenticate],
       schema: {
@@ -136,7 +136,7 @@ async function buildsRoutes(fastify: FastifyInstance): Promise<void> {
   );
 
   fastify.post<{ Params: BuildParams }>(
-    "/api/builds/:buildId/cancel",
+    "/builds/:buildId/cancel",
     {
       preHandler: [fastify.authenticate],
       schema: {
@@ -161,7 +161,7 @@ async function buildsRoutes(fastify: FastifyInstance): Promise<void> {
   );
 
   fastify.get<{ Params: BuildParams }>(
-    "/api/builds/:buildId/status",
+    "/builds/:buildId/status",
     {
       preHandler: [fastify.authenticate],
       schema: {
@@ -177,19 +177,13 @@ async function buildsRoutes(fastify: FastifyInstance): Promise<void> {
       const { userId } = request.user as { userId: string };
       const { buildId } = request.params;
 
-      const build = await syncBuildStatus(buildId);
-      if (!build) {
+      const ownedBuild = await getBuildById(buildId, userId);
+      if (!ownedBuild) {
         return reply.status(404).send({ error: "Not Found", message: "Build not found." });
       }
 
-      const repo = await import("../../models/repository.model.js").then(
-        (m) => m.RepositoryModel.findOne({ _id: build.repositoryId, userId })
-      );
-      if (!repo) {
-        return reply.status(403).send({ error: "Forbidden", message: "Access denied." });
-      }
-
-      return reply.send(build.toJSON());
+      const build = await syncBuildStatus(buildId);
+      return reply.send((build ?? ownedBuild).toJSON());
     }
   );
 }

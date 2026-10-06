@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import fp from "fastify-plugin";
 import fastifyJwt from "@fastify/jwt";
 import { env } from "../config/env.js";
+import { AUTH_COOKIE_NAME } from "../config/constants.js";
 
 declare module "fastify" {
   interface FastifyInstance {
@@ -13,7 +14,7 @@ async function authPlugin(fastify: FastifyInstance): Promise<void> {
   await fastify.register(fastifyJwt, {
     secret: env.JWT_SECRET,
     cookie: {
-      cookieName: "auth_token",
+      cookieName: AUTH_COOKIE_NAME,
       signed: false,
     },
   });
@@ -21,7 +22,7 @@ async function authPlugin(fastify: FastifyInstance): Promise<void> {
   fastify.decorate(
     "authenticate",
     async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
-      const tokenInCookie = request.cookies?.["auth_token"];
+      const tokenInCookie = request.cookies?.[AUTH_COOKIE_NAME];
       const tokenInHeader = request.headers.authorization;
 
       if (!tokenInCookie && !tokenInHeader) {

@@ -1,7 +1,10 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
 import type { User, AuthContextType } from "../types/auth";
-import { apiClient } from "../lib/apiClient";
+import { apiClient, API_BASE_URL } from "../lib/apiClient";
+import { tokenStorage } from "../lib/tokenStorage";
 import axios from "axios";
+
+export const GITHUB_LOGIN_URL = `${API_BASE_URL}/auth/github`;
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -14,7 +17,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsLoading(true);
     setError(null);
     try {
-      const { data } = await apiClient.get<User>("/api/auth/me");
+      const { data } = await apiClient.get<User>("/auth/me");
       setUser(data);
     } catch (err) {
       setUser(null);
@@ -31,18 +34,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [checkAuth]);
 
   const loginWithGitHub = useCallback((): void => {
-    const authServerUrl = import.meta.env.VITE_SERVER_URL;
-    window.location.href = `${authServerUrl}/auth/github`;
+    window.location.href = GITHUB_LOGIN_URL;
   }, []);
 
   const logout = useCallback(async (): Promise<void> => {
     setIsLoading(true);
     try {
-      await apiClient.post("/api/auth/logout");
-      setUser(null);
+      await apiClient.post("/auth/logout");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Logout failed");
     } finally {
+      tokenStorage.clear();
+      setUser(null);
       setIsLoading(false);
     }
   }, []);

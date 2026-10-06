@@ -20,7 +20,7 @@ export function useGitHubRepos(): UseGitHubReposResult {
     setError(null);
 
     try {
-      const { data } = await apiClient.get<GitHubRepoOption[]>("/api/github/repos");
+      const { data } = await apiClient.get<GitHubRepoOption[]>("/github/repos");
       setRepos(data);
     } catch (err) {
       if (!axios.isAxiosError(err) || err.response?.status !== 401) {

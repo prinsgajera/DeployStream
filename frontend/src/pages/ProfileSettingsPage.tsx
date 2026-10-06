@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Sidebar } from "../components/layout/Sidebar";
 import { Header } from "../components/layout/Header";
 import { useAuth } from "../hooks/useAuth";
+import { GITHUB_LOGIN_URL } from "../context/AuthContext";
 import {
   User as UserIcon,
   Key,
@@ -289,7 +290,7 @@ export const ProfileSettingsPage: React.FC = () => {
 
               <div className="pt-2 flex justify-end">
                 <a
-                  href="http://localhost:3001/auth/github"
+                  href={GITHUB_LOGIN_URL}
                   className="flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold text-zinc-100 transition-colors"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />

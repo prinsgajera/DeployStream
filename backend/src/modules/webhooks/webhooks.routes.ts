@@ -1,10 +1,14 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import fp from "fastify-plugin";
-import { verifyGitHubSignature, handlePushEvent } from "./webhooks.service.js";
+import {
+  verifyGitHubSignature,
+  handlePushEvent,
+  type GitHubPushPayload,
+} from "./webhooks.service.js";
 
 async function webhooksRoutes(fastify: FastifyInstance): Promise<void> {
   fastify.post(
-    "/api/webhooks/github",
+    "/webhooks/github",
     {
       config: { rawBody: true },
       schema: {
@@ -23,7 +27,7 @@ async function webhooksRoutes(fastify: FastifyInstance): Promise<void> {
     async (request: FastifyRequest, reply: FastifyReply) => {
       const signatureHeader = request.headers["x-hub-signature-256"] as string | undefined;
       const eventType = request.headers["x-github-event"] as string | undefined;
-      const rawBody = (request as FastifyRequest & { rawBody?: Buffer }).rawBody;
+      const { rawBody } = request;
 
       if (!rawBody) {
         return reply.status(400).send({ error: "Bad Request", message: "Raw body unavailable." });
@@ -39,7 +43,7 @@ async function webhooksRoutes(fastify: FastifyInstance): Promise<void> {
       }
 
       try {
-        const result = await handlePushEvent(request.body as Parameters<typeof handlePushEvent>[0]);
+        const result = await handlePushEvent(request.body as GitHubPushPayload);
         return reply.send({ received: true, ...result });
       } catch (err) {
         fastify.log.error({ err }, "Failed to process GitHub push webhook");
