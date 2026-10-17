@@ -1,6 +1,6 @@
 # DeployStream AWS setup (free tier, static sites)
 
-Region: **us-east-1** for everything. Replace `<ACCOUNT_ID>` with your 12-digit AWS account ID.
+Region: **ap-south-1 (Mumbai)** for S3, CodeBuild and CloudWatch Logs. The ACM certificate (step 4) must be in **us-east-1**; CloudFront and IAM are global. Replace `<ACCOUNT_ID>` with your 12-digit AWS account ID.
 Do all console steps signed in as the account owner/admin with MFA. Never use root access keys in `backend/.env`.
 
 ## 0. Cost guardrail (do first)
