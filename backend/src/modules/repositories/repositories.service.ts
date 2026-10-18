@@ -2,9 +2,16 @@ import { Types } from "mongoose";
 import { RepositoryModel, type IRepositoryDocument, type IEnvVar } from "../../models/repository.model.js";
 import { decryptToken } from "../../lib/crypto.js";
 import { UserModel } from "../../models/user.model.js";
-import { BuildModel } from "../../models/build.model.js";
+import { BuildModel, BuildStatus } from "../../models/build.model.js";
+import { CodedError, isDuplicateKeyError } from "../../lib/errors.js";
+import {
+  MAX_SUGGESTIONS,
+  buildSuggestionCandidates,
+  validateSubdomain,
+  type SubdomainRejection,
+} from "./subdomain.js";
 import { createPushWebhook, deleteWebhook } from "../../services/github.service.js";
-import { deleteSiteFiles } from "../../services/s3.service.js";
+import { buildDeployedUrl, copySiteFiles, deleteSiteFiles } from "../../services/s3.service.js";
 import { encryptSecretEnvVars, maskSecretEnvVars, mergeEnvVars } from "./env-vars.js";
 import type { FastifyBaseLogger } from "fastify";
 
@@ -65,6 +72,9 @@ export async function importRepository(
   payload: ImportRepositoryPayload,
   log: FastifyBaseLogger
 ): Promise<IRepositoryDocument> {
+  const rejection = validateSubdomain(payload.subdomain);
+  if (rejection) throw subdomainRejectionError(rejection);
+
   const existing = await RepositoryModel.findOne({
     $or: [
       { githubRepoId: payload.githubRepoId },
@@ -112,6 +122,101 @@ export async function importRepository(
     }
   } catch (err) {
     log.error({ err, repositoryId: String(repository._id) }, "Failed to create GitHub webhook");
+  }
+
+  return repository;
+}
+
+const REJECTION_ERRORS: Record<SubdomainRejection, { code: string; message: string }> = {
+  invalid: {
+    code: "INVALID_SUBDOMAIN",
+    message: "Use 3-63 lowercase letters, numbers or hyphens, without starting, ending or doubling hyphens.",
+  },
+  reserved: { code: "RESERVED_SUBDOMAIN", message: "This name is reserved. Please choose another." },
+};
+
+function subdomainRejectionError(rejection: SubdomainRejection): CodedError {
+  const { code, message } = REJECTION_ERRORS[rejection];
+  return new CodedError(code, message);
+}
+
+export interface SubdomainAvailability {
+  available: boolean;
+  reason?: SubdomainRejection | "taken";
+  suggestions: string[];
+}
+
+export async function checkSubdomainAvailability(
+  subdomain: string,
+  excludeRepositoryId?: string
+): Promise<SubdomainAvailability> {
+  const rejection = validateSubdomain(subdomain);
+  if (rejection) return { available: false, reason: rejection, suggestions: [] };
+
+  const excludeFilter = excludeRepositoryId ? { _id: { $ne: excludeRepositoryId } } : {};
+  const isTaken = await RepositoryModel.exists({ subdomain, ...excludeFilter });
+  if (!isTaken) return { available: true, suggestions: [] };
+
+  const candidates = buildSuggestionCandidates(subdomain);
+  const takenCandidates = await RepositoryModel.find({ subdomain: { $in: candidates } }).select("subdomain");
+  const takenNames = new Set(takenCandidates.map((repository) => repository.subdomain));
+  const suggestions = candidates.filter((candidate) => !takenNames.has(candidate)).slice(0, MAX_SUGGESTIONS);
+
+  return { available: false, reason: "taken", suggestions };
+}
+
+export async function renameSubdomain(
+  userId: string,
+  repositoryId: string,
+  subdomain: string,
+  log: FastifyBaseLogger
+): Promise<IRepositoryDocument | null> {
+  const rejection = validateSubdomain(subdomain);
+  if (rejection) throw subdomainRejectionError(rejection);
+
+  const repository = await RepositoryModel.findOne({
+    _id: repositoryId,
+    userId: new Types.ObjectId(userId),
+  });
+  if (!repository) return null;
+  if (repository.subdomain === subdomain) return repository;
+
+  const activeBuild = await BuildModel.exists({
+    repositoryId: repository._id,
+    status: { $in: [BuildStatus.QUEUED, BuildStatus.BUILDING] },
+  });
+  if (activeBuild) {
+    throw new CodedError("BUILD_IN_PROGRESS", "Wait for the running build to finish before renaming.");
+  }
+
+  if (await RepositoryModel.exists({ subdomain })) {
+    throw new CodedError("SUBDOMAIN_CONFLICT", "This subdomain is already taken. Please choose another.");
+  }
+
+  const previousSubdomain = repository.subdomain;
+  const wasDeployed = repository.deployedUrl !== null;
+  if (wasDeployed) await copySiteFiles(previousSubdomain, subdomain);
+
+  try {
+    repository.subdomain = subdomain;
+    if (wasDeployed) repository.deployedUrl = buildDeployedUrl(subdomain);
+    await repository.save();
+  } catch (err) {
+    if (wasDeployed) {
+      await deleteSiteFiles(subdomain).catch((cleanupErr: unknown) =>
+        log.error({ err: cleanupErr, repositoryId }, "Failed to roll back copied site files")
+      );
+    }
+    if (isDuplicateKeyError(err)) {
+      throw new CodedError("SUBDOMAIN_CONFLICT", "This subdomain is already taken. Please choose another.");
+    }
+    throw err;
+  }
+
+  if (wasDeployed) {
+    await deleteSiteFiles(previousSubdomain).catch((cleanupErr: unknown) =>
+      log.error({ err: cleanupErr, repositoryId, previousSubdomain }, "Failed to delete old site files")
+    );
   }
 
   return repository;

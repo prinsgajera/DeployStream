@@ -18,7 +18,7 @@ paths:
 - Frontend `VITE_API_URL` already ends with `/api` (e.g. `http://localhost:3001/api`). Frontend request paths therefore start at the resource (`"/repositories"`), never `"/api/..."`. A doubled `/api/api` means one side added the prefix twice.
 
 ## Endpoints today
-`GET /health`, `GET /auth/github`, `GET /auth/github/callback`, `GET /auth/me`, `POST /auth/logout`, `GET /github/repos`, `GET|POST /repositories` (`/import`), `DELETE /repositories/:id`, `PATCH /repositories/:id/auto-deploy`, `GET /builds`, `GET /builds/repo/:repositoryId`, `POST /builds/repo/:repositoryId/trigger`, `GET /builds/:buildId/{logs,status}`, `POST /builds/:buildId/cancel`, WebSocket `/builds/:buildId/stream`, `POST /webhooks/github` (all under `/api`).
+`GET /health`, `GET /auth/github`, `GET /auth/github/callback`, `GET /auth/me`, `POST /auth/logout`, `GET /github/repos`, `GET|POST /repositories` (`/import`), `DELETE /repositories/:id`, `PATCH /repositories/:id/auto-deploy`, `PATCH /repositories/:id` (settings), `PATCH /repositories/:id/subdomain`, `GET /repositories/subdomain-availability`, `GET /builds`, `GET /builds/repo/:repositoryId`, `POST /builds/repo/:repositoryId/trigger`, `GET /builds/:buildId/{logs,status}`, `POST /builds/:buildId/cancel`, WebSocket `/builds/:buildId/stream`, `POST /webhooks/github` (all under `/api`).
 
 ## Authentication
 1. Frontend navigates to `${VITE_API_URL}/auth/github` (`GITHUB_LOGIN_URL` in `AuthContext`).

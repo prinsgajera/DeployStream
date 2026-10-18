@@ -1,6 +1,7 @@
 import {
   S3Client,
   PutObjectCommand,
+  CopyObjectCommand,
   ListObjectsV2Command,
   DeleteObjectsCommand,
 } from "@aws-sdk/client-s3";
@@ -54,6 +55,62 @@ export async function deleteSiteFiles(subdomain: string): Promise<number> {
   } while (continuationToken);
 
   return deletedCount;
+}
+
+const COPY_CONCURRENCY = 10;
+
+async function listKeys(prefix: string): Promise<string[]> {
+  const keys: string[] = [];
+  let continuationToken: string | undefined;
+
+  do {
+    const listing = await client.send(
+      new ListObjectsV2Command({
+        Bucket: env.S3_BUILDS_BUCKET,
+        Prefix: prefix,
+        ContinuationToken: continuationToken,
+      })
+    );
+    (listing.Contents ?? []).forEach((object) => {
+      if (object.Key) keys.push(object.Key);
+    });
+    continuationToken = listing.IsTruncated ? listing.NextContinuationToken : undefined;
+  } while (continuationToken);
+
+  return keys;
+}
+
+function encodeCopySource(key: string): string {
+  return [env.S3_BUILDS_BUCKET, ...key.split("/").map(encodeURIComponent)].join("/");
+}
+
+export async function copySiteFiles(fromSubdomain: string, toSubdomain: string): Promise<number> {
+  const fromPrefix = buildS3KeyPrefix(fromSubdomain);
+  const toPrefix = buildS3KeyPrefix(toSubdomain);
+
+  await deleteSiteFiles(toSubdomain);
+  const keys = await listKeys(fromPrefix);
+
+  try {
+    for (let start = 0; start < keys.length; start += COPY_CONCURRENCY) {
+      await Promise.all(
+        keys.slice(start, start + COPY_CONCURRENCY).map((key) =>
+          client.send(
+            new CopyObjectCommand({
+              Bucket: env.S3_BUILDS_BUCKET,
+              CopySource: encodeCopySource(key),
+              Key: `${toPrefix}${key.slice(fromPrefix.length)}`,
+            })
+          )
+        )
+      );
+    }
+  } catch (err) {
+    await deleteSiteFiles(toSubdomain);
+    throw err;
+  }
+
+  return keys.length;
 }
 
 export async function uploadObject(

@@ -21,9 +21,9 @@
       "Condition": { "StringLike": { "s3:prefix": ["builds/*"] } }
     },
     {
-      "Sid": "DeleteSiteFiles",
+      "Sid": "ManageSiteFiles",
       "Effect": "Allow",
-      "Action": ["s3:DeleteObject"],
+      "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
       "Resource": "arn:aws:s3:::deploystream-client-builds/builds/*"
     }
   ]

@@ -7,11 +7,30 @@ import {
   deleteUserRepository,
   updateAutoDeployStatus,
   updateRepositorySettings,
+  checkSubdomainAvailability,
+  renameSubdomain,
   serializeRepository,
   type UpdateRepositorySettingsPayload,
   type ImportRepositoryPayload,
 } from "./repositories.service.js";
 import { repositorySchemas } from "./repositories.schema.js";
+import { CodedError } from "../../lib/errors.js";
+
+interface SubdomainAvailabilityQuery {
+  subdomain: string;
+  excludeRepositoryId?: string;
+}
+
+interface PatchSubdomainBody {
+  subdomain: string;
+}
+
+const SUBDOMAIN_ERROR_STATUS: Record<string, { status: 400 | 409; error: string }> = {
+  INVALID_SUBDOMAIN: { status: 400, error: "Bad Request" },
+  RESERVED_SUBDOMAIN: { status: 400, error: "Bad Request" },
+  SUBDOMAIN_CONFLICT: { status: 409, error: "Conflict" },
+  BUILD_IN_PROGRESS: { status: 409, error: "Conflict" },
+};
 
 interface ImportBody {
   githubRepoId: string;
@@ -79,6 +98,14 @@ async function repositoriesRoutes(fastify: FastifyInstance): Promise<void> {
         return reply.status(201).send(serializeRepository(repository));
       } catch (err) {
         const error = err as NodeJS.ErrnoException;
+        const subdomainFailure = err instanceof CodedError ? SUBDOMAIN_ERROR_STATUS[err.code] : undefined;
+
+        if (err instanceof CodedError && subdomainFailure) {
+          return reply.status(subdomainFailure.status).send({
+            error: subdomainFailure.error,
+            message: err.message,
+          });
+        }
 
         if (error.code === "REPO_CONFLICT") {
           return reply.status(409).send({
@@ -98,6 +125,64 @@ async function repositoriesRoutes(fastify: FastifyInstance): Promise<void> {
         return reply.status(500).send({
           error: "Internal Server Error",
           message: "Failed to import repository.",
+        });
+      }
+    }
+  );
+
+  fastify.get<{ Querystring: SubdomainAvailabilityQuery }>(
+    "/repositories/subdomain-availability",
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        querystring: repositorySchemas.subdomainAvailabilityQuery,
+        response: { 200: repositorySchemas.subdomainAvailabilityResponse },
+      },
+    },
+    async (request, reply) => {
+      const { subdomain, excludeRepositoryId } = request.query;
+      return reply.send(await checkSubdomainAvailability(subdomain.toLowerCase(), excludeRepositoryId));
+    }
+  );
+
+  fastify.patch<{ Params: RepoParams; Body: PatchSubdomainBody }>(
+    "/repositories/:id/subdomain",
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        params: {
+          type: "object",
+          required: ["id"],
+          properties: { id: { type: "string" } },
+        },
+        body: repositorySchemas.patchSubdomainBody,
+        response: {
+          200: repositorySchemas.repositoryResponse,
+          400: repositorySchemas.errorResponse,
+          404: repositorySchemas.errorResponse,
+          409: repositorySchemas.errorResponse,
+          500: repositorySchemas.errorResponse,
+        },
+      },
+    },
+    async (request, reply) => {
+      const { userId } = request.user as { userId: string };
+
+      try {
+        const updated = await renameSubdomain(userId, request.params.id, request.body.subdomain, request.log);
+        if (!updated) {
+          return reply.status(404).send({ error: "Not Found", message: "Repository not found." });
+        }
+        return reply.send(serializeRepository(updated));
+      } catch (err) {
+        const failure = err instanceof CodedError ? SUBDOMAIN_ERROR_STATUS[err.code] : undefined;
+        if (err instanceof CodedError && failure) {
+          return reply.status(failure.status).send({ error: failure.error, message: err.message });
+        }
+        fastify.log.error({ err }, "Failed to rename subdomain");
+        return reply.status(500).send({
+          error: "Internal Server Error",
+          message: "Failed to rename subdomain.",
         });
       }
     }

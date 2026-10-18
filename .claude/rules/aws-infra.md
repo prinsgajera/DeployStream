@@ -27,7 +27,7 @@ paths:
 
 ## IAM and credentials
 - Root account only for first-time setup (MFA, billing-access toggle, creating the IAM admin user). All other console work uses the IAM admin user with MFA.
-- Backend runtime uses an IAM user with the least-privilege policy in `infra/iam-backend-policy.json` (CodeBuild start/stop/get, log read, S3 list/delete under `builds/*`). CodeBuild's service role gets `infra/iam-codebuild-s3-policy.json` plus its auto-created log permissions.
+- Backend runtime uses an IAM user with the least-privilege policy in `infra/iam-backend-policy.json` (CodeBuild start/stop/get, log read, S3 list plus get/put/delete under `builds/*` for subdomain renames and cleanup). CodeBuild's service role gets `infra/iam-codebuild-s3-policy.json` plus its auto-created log permissions.
 - Update the policy JSON whenever the backend starts using a new AWS API.
 - Access keys exist only in gitignored `backend/.env`. Never ask for, echo, log or commit AWS keys, GitHub secrets or tokens. Ask the user for non-secret identifiers (account ID, distribution ID/domain) instead.
 - The user's GitHub token reaches CodeBuild as a plain env var (visible in build details). Accepted for this learning project; do not extend that pattern to other secrets.

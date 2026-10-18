@@ -20,7 +20,9 @@ import {
 import type { GitHubRepoOption, EnvironmentVariable, ImportedRepository } from "../../types/dashboard";
 import { useGitHubRepos } from "../../hooks/useGitHubRepos";
 import { apiClient } from "../../lib/apiClient";
-import { DEPLOYED_BASE_DOMAIN } from "../../lib/config";
+import { slugifySubdomain } from "../../lib/subdomain";
+import { SubdomainField } from "./SubdomainField";
+import { useSubdomainAvailability } from "../../hooks/useSubdomainAvailability";
 import axios from "axios";
 
 interface ImportRepositoryModalProps {
@@ -32,15 +34,6 @@ interface ImportRepositoryModalProps {
 const FIELD_LABEL_CLASS = "block text-xs font-mono uppercase text-zinc-400 mb-1.5 tracking-wider";
 const FIELD_CLASS =
   "w-full h-10 bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 text-xs font-mono text-zinc-200 focus:outline-none focus:border-cyan-500/60 transition-colors";
-
-function generateSubdomain(fullName: string): string {
-  return fullName
-    .toLowerCase()
-    .replace(/[^a-z0-9-]/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "")
-    .slice(0, 63);
-}
 
 function formatUpdatedAt(dateStr: string): string {
   try {
@@ -90,6 +83,8 @@ export const ImportRepositoryModal: React.FC<ImportRepositoryModalProps> = ({
   const [buildCommand, setBuildCommand] = useState("npm run build");
   const [outputDirectory, setOutputDirectory] = useState("dist");
   const [subdomain, setSubdomain] = useState("");
+  const { status: subdomainStatus, suggestions: subdomainSuggestions } = useSubdomainAvailability(subdomain);
+  const isSubdomainReady = subdomainStatus === "available";
 
   const [envVars, setEnvVars] = useState<EnvironmentVariable[]>([]);
 
@@ -100,7 +95,7 @@ export const ImportRepositoryModal: React.FC<ImportRepositoryModalProps> = ({
   useEffect(() => {
     if (selectedRepo) {
       setBranch(selectedRepo.default_branch);
-      setSubdomain(generateSubdomain(selectedRepo.full_name));
+      setSubdomain(slugifySubdomain(selectedRepo.full_name));
     }
   }, [selectedRepo]);
 
@@ -433,13 +428,17 @@ export const ImportRepositoryModal: React.FC<ImportRepositoryModalProps> = ({
                 </div>
               </div>
 
-              <div className="bg-zinc-950/80 p-4 rounded-xl border border-zinc-800/60">
-                <p className={`${FIELD_LABEL_CLASS} mb-2`}>Deployment URL (auto-generated)</p>
-                <p className="text-sm font-mono text-zinc-100 break-all">
-                  <span className="text-cyan-400">{subdomain}</span>
-                  <span className="text-zinc-500">{DEPLOYED_BASE_DOMAIN ? `.${DEPLOYED_BASE_DOMAIN}` : ""}</span>
-                </p>
-                <p className="text-xs text-zinc-500 mt-2">The subdomain is fixed once the repository is imported.</p>
+              <div className="space-y-2">
+                <label htmlFor="import-subdomain" className={FIELD_LABEL_CLASS}>
+                  Site Subdomain
+                </label>
+                <SubdomainField
+                  id="import-subdomain"
+                  value={subdomain}
+                  status={subdomainStatus}
+                  suggestions={subdomainSuggestions}
+                  onChange={setSubdomain}
+                />
               </div>
             </div>
           )}
@@ -546,7 +545,7 @@ export const ImportRepositoryModal: React.FC<ImportRepositoryModalProps> = ({
             {step < 3 ? (
               <button
                 type="button"
-                disabled={!selectedRepo}
+                disabled={!selectedRepo || (step === 2 && !isSubdomainReady)}
                 onClick={() => setStep((step + 1) as 2 | 3)}
                 className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-zinc-950 font-semibold text-xs transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer shadow-lg shadow-cyan-950/40"
               >
@@ -557,7 +556,7 @@ export const ImportRepositoryModal: React.FC<ImportRepositoryModalProps> = ({
               <button
                 type="button"
                 onClick={handleDeploy}
-                disabled={isImporting || importSuccess}
+                disabled={isImporting || importSuccess || !isSubdomainReady}
                 className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-zinc-950 font-semibold text-xs transition-all active:scale-[0.98] disabled:opacity-60 cursor-pointer shadow-lg shadow-emerald-950/40"
               >
                 {isImporting ? (

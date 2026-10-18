@@ -1,21 +1,40 @@
-import React, { useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { Sidebar } from "../components/layout/Sidebar";
 import { Header } from "../components/layout/Header";
+import { DomainCard } from "../components/dashboard/DomainCard";
+import { EditSubdomainModal } from "../components/dashboard/EditSubdomainModal";
 import { useUserRepositories } from "../hooks/useUserRepositories";
-import { formatRelativeTime } from "../lib/format";
-import { Globe, Check, ExternalLink, ShieldCheck, Box, Copy } from "lucide-react";
+import { useBuilds } from "../hooks/useBuilds";
+import { useRepositoryActions } from "../hooks/useRepositoryActions";
+import { ACTIVE_BUILD_STATUSES } from "../types/dashboard";
+import { Globe, ShieldCheck, CheckCircle2 } from "lucide-react";
 
-const COPIED_RESET_MS = 2000;
+const NOTICE_RESET_MS = 4000;
 
 export const DomainsPage: React.FC = () => {
-  const { repositories, isLoading } = useUserRepositories();
-  const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
+  const { repositories, isLoading, refetch } = useUserRepositories();
+  const { builds } = useBuilds();
+  const { renameSubdomain, pendingIds } = useRepositoryActions(refetch);
+  const [editingRepositoryId, setEditingRepositoryId] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
-  const handleCopyUrl = async (url: string): Promise<void> => {
-    await navigator.clipboard.writeText(url);
-    setCopiedUrl(url);
-    setTimeout(() => setCopiedUrl(null), COPIED_RESET_MS);
-  };
+  const editingRepository = repositories.find((repository) => repository.id === editingRepositoryId) ?? null;
+
+  const closeModal = useCallback(() => setEditingRepositoryId(null), []);
+
+  const handleRenamed = useCallback((): void => {
+    setEditingRepositoryId(null);
+    setNotice("Subdomain updated. Your site now lives at the new address.");
+    setTimeout(() => setNotice(null), NOTICE_RESET_MS);
+  }, []);
+
+  const repositoriesWithActiveBuild = useMemo(
+    () =>
+      new Set(
+        builds.filter((build) => ACTIVE_BUILD_STATUSES.includes(build.status)).map((build) => build.repositoryId)
+      ),
+    [builds]
+  );
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans selection:bg-zinc-800 selection:text-zinc-100">
@@ -36,7 +55,7 @@ export const DomainsPage: React.FC = () => {
                 </span>
               </div>
               <p className="text-xs text-zinc-400 mt-1">
-                Each repository is served on its own subdomain over HTTPS.
+                Choose the subdomain each site is served on. Every address gets HTTPS automatically.
               </p>
             </div>
 
@@ -45,6 +64,16 @@ export const DomainsPage: React.FC = () => {
               <span>Wildcard HTTPS via CloudFront</span>
             </div>
           </div>
+
+          {notice && (
+            <p
+              role="status"
+              className="flex items-center gap-2 text-xs font-mono text-emerald-400 bg-emerald-950/30 border border-emerald-900/40 rounded-xl p-3"
+            >
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+              {notice}
+            </p>
+          )}
 
           {isLoading && (
             <div className="p-12 text-center text-xs font-mono text-zinc-500">Loading domains...</div>
@@ -56,57 +85,25 @@ export const DomainsPage: React.FC = () => {
             </div>
           )}
 
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 gap-3">
             {repositories.map((repository) => (
-              <article
-                key={repository.id}
-                className="bg-zinc-900/70 border border-zinc-800/80 rounded-2xl p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="p-2 rounded-xl bg-zinc-800 text-cyan-400 shrink-0">
-                    <Box className="w-4 h-4" />
-                  </div>
-                  <div className="flex flex-col min-w-0">
-                    <span className="font-semibold text-zinc-100 truncate">{repository.repoName}</span>
-                    <span className="text-xs font-mono text-zinc-400">
-                      subdomain: <span className="text-cyan-400">{repository.subdomain}</span> &bull; deployed{" "}
-                      {formatRelativeTime(repository.lastDeployedAt)}
-                    </span>
-                  </div>
-                </div>
-
-                {repository.deployedUrl ? (
-                  <div className="flex items-center gap-2 min-w-0">
-                    <a
-                      href={repository.deployedUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="font-mono text-xs text-cyan-400 hover:underline truncate flex items-center gap-1 font-semibold focus-visible:ring-2 focus-visible:ring-cyan-500 rounded"
-                    >
-                      {repository.deployedUrl}
-                      <ExternalLink className="w-3.5 h-3.5 shrink-0" />
-                    </a>
-                    <button
-                      type="button"
-                      onClick={() => void handleCopyUrl(repository.deployedUrl ?? "")}
-                      className="p-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 transition-all duration-200 active:scale-[0.98] cursor-pointer shrink-0 focus-visible:ring-2 focus-visible:ring-cyan-500"
-                      aria-label="Copy live URL"
-                    >
-                      {copiedUrl === repository.deployedUrl ? (
-                        <Check className="w-3.5 h-3.5 text-emerald-400" />
-                      ) : (
-                        <Copy className="w-3.5 h-3.5 text-zinc-400" />
-                      )}
-                    </button>
-                  </div>
-                ) : (
-                  <span className="font-mono text-xs text-zinc-500">Not deployed yet</span>
-                )}
-              </article>
+              <DomainCard key={repository.id} repository={repository} onEdit={setEditingRepositoryId} />
             ))}
           </div>
         </div>
       </main>
+
+      {editingRepository && (
+        <EditSubdomainModal
+          key={editingRepository.id}
+          repository={editingRepository}
+          hasActiveBuild={repositoriesWithActiveBuild.has(editingRepository.id)}
+          isRenaming={pendingIds.has(editingRepository.id)}
+          onRename={renameSubdomain}
+          onClose={closeModal}
+          onRenamed={handleRenamed}
+        />
+      )}
     </div>
   );
 };

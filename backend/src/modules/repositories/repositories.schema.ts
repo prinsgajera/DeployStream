@@ -47,8 +47,8 @@ export const repositorySchemas = {
       fullName: { type: "string" },
       subdomain: {
         type: "string",
-        pattern: "^[a-z0-9-]+$",
-        minLength: 2,
+        pattern: "^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$",
+        minLength: 3,
         maxLength: 63,
       },
       branch: { type: "string" },
@@ -130,6 +130,31 @@ export const repositorySchemas = {
         },
       },
     },
+  },
+
+  subdomainAvailabilityQuery: {
+    type: "object",
+    required: ["subdomain"],
+    properties: {
+      subdomain: { type: "string", maxLength: 100 },
+      excludeRepositoryId: { type: "string" },
+    },
+  },
+
+  subdomainAvailabilityResponse: {
+    type: "object",
+    properties: {
+      available: { type: "boolean" },
+      reason: { type: "string", enum: ["invalid", "reserved", "taken"] },
+      suggestions: { type: "array", items: { type: "string" } },
+    },
+  },
+
+  patchSubdomainBody: {
+    type: "object",
+    required: ["subdomain"],
+    additionalProperties: false,
+    properties: { subdomain: { type: "string", maxLength: 100 } },
   },
 
   patchAutoDeployBody: {

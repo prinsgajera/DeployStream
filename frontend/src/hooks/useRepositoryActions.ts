@@ -6,6 +6,7 @@ import type { ImportedRepository, RepositorySettingsPayload } from "../types/das
 interface UseRepositoryActionsResult {
   deleteRepository: (repositoryId: string) => Promise<boolean>;
   updateSettings: (repositoryId: string, payload: RepositorySettingsPayload) => Promise<boolean>;
+  renameSubdomain: (repositoryId: string, subdomain: string) => Promise<string | null>;
   pendingIds: ReadonlySet<string>;
   error: string | null;
 }
@@ -59,5 +60,25 @@ export function useRepositoryActions(onChanged: () => void): UseRepositoryAction
     [run]
   );
 
-  return { deleteRepository, updateSettings, pendingIds, error };
+  const renameSubdomain = useCallback(
+    async (repositoryId: string, subdomain: string): Promise<string | null> => {
+      setPendingIds((prev) => new Set(prev).add(repositoryId));
+      try {
+        await apiClient.patch<ImportedRepository>(`/repositories/${repositoryId}/subdomain`, { subdomain });
+        onChanged();
+        return null;
+      } catch (err) {
+        return toMessage(err, "Failed to rename subdomain");
+      } finally {
+        setPendingIds((prev) => {
+          const next = new Set(prev);
+          next.delete(repositoryId);
+          return next;
+        });
+      }
+    },
+    [onChanged]
+  );
+
+  return { deleteRepository, updateSettings, renameSubdomain, pendingIds, error };
 }

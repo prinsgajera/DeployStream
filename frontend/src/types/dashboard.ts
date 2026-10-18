@@ -74,4 +74,10 @@ export interface RepositorySettingsPayload {
   envVars: RepositoryEnvVar[];
 }
 
+export interface SubdomainAvailability {
+  available: boolean;
+  reason?: "invalid" | "reserved" | "taken";
+  suggestions: string[];
+}
+
 export const ACTIVE_BUILD_STATUSES: readonly BuildStatusType[] = ["QUEUED", "BUILDING"];
