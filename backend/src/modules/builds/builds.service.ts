@@ -220,6 +220,8 @@ export async function getBuildById(
   buildId: string,
   userId: string
 ): Promise<IBuildDocument | null> {
+  if (!Types.ObjectId.isValid(buildId)) return null;
+
   const build = await BuildModel.findById(buildId);
   if (!build) return null;
 

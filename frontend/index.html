@@ -2,9 +2,27 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>frontend</title>
+    <meta name="description" content="DeployStream: connect a GitHub repository, build it on AWS and ship your static site to its own subdomain on every push." />
+    <meta name="theme-color" content="#09090b" />
+    <script>
+      (function () {
+        var root = document.documentElement;
+        try {
+          var stored = localStorage.getItem('deploystream.theme');
+          var systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          var isDark = stored === 'dark' || (stored !== 'light' && systemDark);
+          root.classList.add(isDark ? 'dark' : 'light');
+          if (!isDark) document.querySelector('meta[name="theme-color"]').setAttribute('content', '#f4f4f5');
+        } catch (e) {
+          root.classList.add('dark');
+        }
+      })();
+    </script>
+    <title>DeployStream · Ship static sites from GitHub</title>
   </head>
   <body>
     <div id="root"></div>

@@ -159,7 +159,7 @@ export const EditSubdomainModal: React.FC<EditSubdomainModalProps> = ({
           <button
             type="submit"
             disabled={!canSave}
-            className={`${BUTTON_CLASS} bg-cyan-500 hover:bg-cyan-400 text-zinc-950`}
+            className={`${BUTTON_CLASS} bg-cyan-500 hover:bg-cyan-400 light:hover:bg-cyan-300 text-on-accent`}
           >
             {isRenaming && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
             {isRenaming ? "Saving..." : "Save subdomain"}

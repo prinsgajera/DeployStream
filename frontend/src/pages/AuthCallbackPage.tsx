@@ -5,6 +5,7 @@ import { CheckCircle2, XCircle, Loader2, ArrowRight, RefreshCw, Terminal, User a
 import type { User } from "../types/auth";
 import { apiClient } from "../lib/apiClient";
 import { tokenStorage } from "../lib/tokenStorage";
+import { pageTitle } from "../lib/config";
 
 type CallbackStatus = "processing" | "success" | "error";
 
@@ -61,8 +62,9 @@ export const AuthCallbackPage: React.FC = () => {
 
   return (
     <div className="min-h-screen w-full bg-zinc-950 text-zinc-50 flex flex-col justify-between selection:bg-zinc-800 font-sans relative overflow-hidden">
+      <title>{pageTitle(status === "error" ? "Sign-in failed" : "Signing in")}</title>
       {/* Background Micro Grids */}
-      <div className="absolute inset-0 bg-[radial-gradient(#27272a_1px,transparent_1px)] [background-size:24px_24px] opacity-30 pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(var(--grid-dot)_1px,transparent_1px)] [background-size:24px_24px] opacity-30 pointer-events-none" />
 
       {/* Header */}
       <header className="relative z-10 w-full max-w-7xl mx-auto px-6 py-6 flex items-center justify-between border-b border-zinc-900/80">
@@ -135,7 +137,7 @@ export const AuthCallbackPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => navigate("/dashboard")}
-                  className="w-full flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-semibold py-3 px-4 rounded-xl transition-all duration-200 active:scale-[0.98] cursor-pointer shadow-lg shadow-emerald-950/40"
+                  className="w-full flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 light:hover:bg-emerald-300 text-on-accent font-semibold py-3 px-4 rounded-xl transition-all duration-200 active:scale-[0.98] cursor-pointer shadow-lg shadow-emerald-950/40"
                 >
                   <span>Continue to Workspace</span>
                   <ArrowRight className="w-4 h-4" />

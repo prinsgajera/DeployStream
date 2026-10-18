@@ -226,9 +226,9 @@ export const ImportRepositoryModal: React.FC<ImportRepositoryModalProps> = ({
                 <span
                   className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-bold transition-colors ${
                     step === s.num
-                      ? "bg-cyan-500 text-zinc-950"
+                      ? "bg-cyan-500 text-on-accent"
                       : step > s.num
-                      ? "bg-emerald-500 text-zinc-950"
+                      ? "bg-emerald-500 text-on-accent"
                       : "bg-zinc-800 text-zinc-400"
                   }`}
                 >
@@ -323,7 +323,7 @@ export const ImportRepositoryModal: React.FC<ImportRepositoryModalProps> = ({
 
                         <div className={`w-6 h-6 rounded-full shrink-0 ml-3 flex items-center justify-center font-bold transition-all ${
                           isSelected
-                            ? "bg-cyan-500 text-zinc-950"
+                            ? "bg-cyan-500 text-on-accent"
                             : "bg-zinc-800/0 group-hover:bg-zinc-800 border border-transparent group-hover:border-zinc-700"
                         }`}>
                           {isSelected && <Check className="w-3.5 h-3.5" />}
@@ -547,7 +547,7 @@ export const ImportRepositoryModal: React.FC<ImportRepositoryModalProps> = ({
                 type="button"
                 disabled={!selectedRepo || (step === 2 && !isSubdomainReady)}
                 onClick={() => setStep((step + 1) as 2 | 3)}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-zinc-950 font-semibold text-xs transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer shadow-lg shadow-cyan-950/40"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 light:hover:bg-cyan-300 text-on-accent font-semibold text-xs transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer shadow-lg shadow-cyan-950/40"
               >
                 <span>Continue</span>
                 <ChevronRight className="w-4 h-4" />
@@ -557,7 +557,7 @@ export const ImportRepositoryModal: React.FC<ImportRepositoryModalProps> = ({
                 type="button"
                 onClick={handleDeploy}
                 disabled={isImporting || importSuccess || !isSubdomainReady}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-zinc-950 font-semibold text-xs transition-all active:scale-[0.98] disabled:opacity-60 cursor-pointer shadow-lg shadow-emerald-950/40"
+                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 light:hover:bg-emerald-300 dark:bg-emerald-400 dark:hover:bg-emerald-300 text-on-accent font-semibold text-xs transition-all active:scale-[0.98] disabled:opacity-60 cursor-pointer shadow-lg shadow-emerald-950/40"
               >
                 {isImporting ? (
                   <>

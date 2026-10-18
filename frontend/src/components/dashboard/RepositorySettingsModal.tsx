@@ -190,7 +190,7 @@ export const RepositorySettingsModal: React.FC<RepositorySettingsModalProps> = (
           <button
             type="submit"
             disabled={!canSave}
-            className="flex items-center gap-2 px-5 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-zinc-950 font-semibold text-xs transition-all duration-200 active:scale-[0.98] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-cyan-300"
+            className="flex items-center gap-2 px-5 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 light:hover:bg-cyan-300 text-on-accent font-semibold text-xs transition-all duration-200 active:scale-[0.98] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-cyan-300"
           >
             {isSaving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
             Save settings

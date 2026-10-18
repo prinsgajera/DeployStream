@@ -1,18 +1,15 @@
 import { useState, useEffect, useCallback } from "react";
 import { API_BASE_URL } from "../lib/apiClient";
-import type { BuildStatusType } from "../types/dashboard";
 
-export type StreamConnection = "connecting" | "open" | "closed";
+type StreamConnection = "connecting" | "open" | "closed";
 
 interface LogFrame {
   type: "log" | "status" | "error" | "done";
   message?: string;
-  status?: BuildStatusType;
 }
 
 interface UseBuildLogStreamResult {
   lines: string[];
-  status: BuildStatusType | null;
   connection: StreamConnection;
   error: string | null;
   clear: () => void;
@@ -26,7 +23,6 @@ function isLogFrame(value: unknown): value is LogFrame {
 
 export function useBuildLogStream(buildId: string): UseBuildLogStreamResult {
   const [lines, setLines] = useState<string[]>([]);
-  const [status, setStatus] = useState<BuildStatusType | null>(null);
   const [connection, setConnection] = useState<StreamConnection>("connecting");
   const [error, setError] = useState<string | null>(null);
 
@@ -51,8 +47,6 @@ export function useBuildLogStream(buildId: string): UseBuildLogStreamResult {
         if (frame.type === "log" && frame.message !== undefined) {
           const message = frame.message;
           setLines((prev) => [...prev, message]);
-        } else if (frame.type === "status" || frame.type === "done") {
-          setStatus(frame.status ?? null);
         } else if (frame.type === "error") {
           setError(frame.message ?? "Log stream error");
         }
@@ -70,5 +64,5 @@ export function useBuildLogStream(buildId: string): UseBuildLogStreamResult {
 
   const clear = useCallback(() => setLines([]), []);
 
-  return { lines, status, connection, error, clear };
+  return { lines, connection, error, clear };
 }

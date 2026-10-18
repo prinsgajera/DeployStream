@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { Sidebar } from "../components/layout/Sidebar";
 import { Header } from "../components/layout/Header";
-import { LiveTerminalTab } from "../components/dashboard/LiveTerminalTab";
 import { BuildStatusBadge } from "../components/dashboard/BuildStatusBadge";
 import { useBuilds } from "../hooks/useBuilds";
 import { useBuildActions } from "../hooks/useBuildActions";
@@ -12,13 +12,14 @@ import {
   GitCommit,
   RotateCcw,
   X,
-  ChevronDown,
-  ChevronUp,
+  ArrowRight,
   Terminal as TerminalIcon,
   Filter,
   Loader2,
 } from "lucide-react";
 import { ACTIVE_BUILD_STATUSES, type BuildStatusType } from "../types/dashboard";
+import { pageTitle } from "../lib/config";
+import { TAB_ACTIVE_CLASS, TAB_INACTIVE_CLASS } from "../lib/tabStyles";
 
 type StatusFilter = "ALL" | "ACTIVE" | "SUCCESS" | "FAILED";
 
@@ -40,7 +41,6 @@ export const DeploymentsPage: React.FC = () => {
   const { repositories } = useUserRepositories();
   const { triggerBuild, cancelBuild, pendingIds, error: actionError } = useBuildActions(refetch);
   const [filterStatus, setFilterStatus] = useState<StatusFilter>("ALL");
-  const [expandedBuildId, setExpandedBuildId] = useState<string | null>(null);
 
   const repositoryNames = useMemo(
     () => new Map(repositories.map((repository) => [repository.id, repository.repoName])),
@@ -53,6 +53,7 @@ export const DeploymentsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans selection:bg-zinc-800 selection:text-zinc-100">
+      <title>{pageTitle("Deployments")}</title>
       <Sidebar />
       <Header />
 
@@ -95,9 +96,7 @@ export const DeploymentsPage: React.FC = () => {
                     type="button"
                     onClick={() => setFilterStatus(filter)}
                     className={`px-3 py-1 rounded-lg text-xs font-mono transition-all duration-200 cursor-pointer focus-visible:ring-2 focus-visible:ring-cyan-500 ${
-                      filterStatus === filter
-                        ? "bg-zinc-800 text-cyan-400 font-semibold"
-                        : "text-zinc-400 hover:text-zinc-100"
+                      filterStatus === filter ? TAB_ACTIVE_CLASS : TAB_INACTIVE_CLASS
                     }`}
                   >
                     {FILTER_LABELS[filter]}
@@ -123,15 +122,12 @@ export const DeploymentsPage: React.FC = () => {
           <div className="flex flex-col gap-4">
             {filteredBuilds.map((build) => {
               const isActive = ACTIVE_BUILD_STATUSES.includes(build.status);
-              const isExpanded = expandedBuildId === build.id;
               const isPending = pendingIds.has(build.id) || pendingIds.has(build.repositoryId);
 
               return (
                 <article
                   key={build.id}
-                  className={`bg-zinc-900/70 border rounded-2xl overflow-hidden transition-all duration-200 ${
-                    isExpanded ? "border-cyan-500/40 ring-1 ring-cyan-500/20" : "border-zinc-800/80 hover:border-zinc-700"
-                  }`}
+                  className="bg-zinc-900/70 border border-zinc-800/80 hover:border-zinc-700 rounded-2xl overflow-hidden transition-all duration-200"
                 >
                   <div className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex flex-col gap-1 min-w-0">
@@ -167,19 +163,14 @@ export const DeploymentsPage: React.FC = () => {
                     </div>
 
                     <div className="flex items-center gap-3 self-end md:self-center shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => setExpandedBuildId(isExpanded ? null : build.id)}
-                        className={`flex items-center gap-2 px-3.5 py-2 rounded-xl font-mono text-xs font-semibold transition-all duration-200 active:scale-[0.98] cursor-pointer focus-visible:ring-2 focus-visible:ring-cyan-500 ${
-                          isExpanded
-                            ? "bg-cyan-500 text-zinc-950"
-                            : "bg-zinc-800 hover:bg-zinc-700 text-zinc-100 border border-zinc-700"
-                        }`}
+                      <Link
+                        to={`/deployments/${build.id}`}
+                        className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-100 border border-zinc-700 font-mono text-xs font-semibold transition-all duration-200 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-cyan-500"
                       >
                         <TerminalIcon className="w-4 h-4" />
-                        <span>{isExpanded ? "Hide Logs" : "View Logs"}</span>
-                        {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                      </button>
+                        <span>View Logs</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
 
                       <button
                         type="button"
@@ -201,11 +192,6 @@ export const DeploymentsPage: React.FC = () => {
                     </div>
                   </div>
 
-                  {isExpanded && (
-                    <div className="border-t border-zinc-800/80 p-5 bg-zinc-950">
-                      <LiveTerminalTab key={build.id} buildId={build.id} deployedUrl={build.deployedUrl} />
-                    </div>
-                  )}
                 </article>
               );
             })}

@@ -13,15 +13,16 @@ import {
 export const Sidebar: React.FC = () => {
   const location = useLocation();
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) =>
+    location.pathname === path || location.pathname.startsWith(`${path}/`);
 
   return (
-    <aside className="fixed left-0 top-0 h-full w-64 bg-zinc-950/95 border-r border-zinc-800/80 z-40 flex flex-col justify-between font-sans selection:bg-zinc-800 selection:text-zinc-100">
+    <aside className="fixed left-0 top-0 h-full w-64 bg-zinc-950/95 light:bg-zinc-900 light:shadow-sm light:shadow-black/5 border-r border-zinc-800/80 z-40 flex flex-col justify-between font-sans selection:bg-zinc-800 selection:text-zinc-100">
       <div className="flex flex-col">
         {/* Logo Section */}
         <div className="h-16 px-4 border-b border-zinc-800/80 flex items-center justify-between">
           <Link to="/dashboard" className="flex items-center gap-3 group">
-            <div className="h-8 w-8 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-cyan-400 group-hover:border-cyan-500/50 transition-colors shadow-inner">
+            <div className="h-8 w-8 rounded-lg bg-zinc-900 light:bg-zinc-950 border border-zinc-800 flex items-center justify-center text-cyan-400 group-hover:border-cyan-500/50 transition-colors shadow-inner">
               <Terminal className="w-4 h-4" />
             </div>
             <div className="flex flex-col">
@@ -46,7 +47,7 @@ export const Sidebar: React.FC = () => {
                 to="/dashboard"
                 className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all ${isActive("/dashboard")
                   ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-semibold shadow-sm"
-                  : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100"
+                  : "text-zinc-400 hover:bg-zinc-900 light:hover:bg-zinc-950 hover:text-zinc-100"
                   }`}
               >
                 <LayoutDashboard className="w-4 h-4" />
@@ -57,7 +58,7 @@ export const Sidebar: React.FC = () => {
                 to="/repositories"
                 className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all ${isActive("/repositories")
                   ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-semibold shadow-sm"
-                  : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100"
+                  : "text-zinc-400 hover:bg-zinc-900 light:hover:bg-zinc-950 hover:text-zinc-100"
                   }`}
               >
                 <FolderGit2 className="w-4 h-4" />
@@ -68,7 +69,7 @@ export const Sidebar: React.FC = () => {
                 to="/deployments"
                 className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all ${isActive("/deployments")
                   ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-semibold shadow-sm"
-                  : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100"
+                  : "text-zinc-400 hover:bg-zinc-900 light:hover:bg-zinc-950 hover:text-zinc-100"
                   }`}
               >
                 <Rocket className="w-4 h-4" />
@@ -86,7 +87,7 @@ export const Sidebar: React.FC = () => {
                 to="/domains"
                 className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all ${isActive("/domains")
                   ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-semibold shadow-sm"
-                  : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100"
+                  : "text-zinc-400 hover:bg-zinc-900 light:hover:bg-zinc-950 hover:text-zinc-100"
                   }`}
               >
                 <Globe className="w-4 h-4" />
@@ -96,7 +97,7 @@ export const Sidebar: React.FC = () => {
                 to="/settings"
                 className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all ${isActive("/settings")
                   ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-semibold shadow-sm"
-                  : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100"
+                  : "text-zinc-400 hover:bg-zinc-900 light:hover:bg-zinc-950 hover:text-zinc-100"
                   }`}
               >
                 <Settings className="w-4 h-4" />
@@ -107,7 +108,7 @@ export const Sidebar: React.FC = () => {
                 href="https://github.com"
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
+                className="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium text-zinc-400 hover:bg-zinc-900 light:hover:bg-zinc-950 hover:text-zinc-100 transition-colors"
               >
                 <BookOpen className="w-4 h-4" />
                 <span>Docs</span>

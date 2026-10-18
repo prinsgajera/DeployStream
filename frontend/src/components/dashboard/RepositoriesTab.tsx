@@ -82,7 +82,7 @@ export const RepositoriesTab: React.FC<RepositoriesTabProps> = ({
         <button
           type="button"
           onClick={onOpenImportModal}
-          className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-zinc-950 font-semibold text-xs shadow-lg shadow-cyan-950/40 transition-all duration-200 active:scale-[0.98] cursor-pointer focus-visible:ring-2 focus-visible:ring-cyan-300"
+          className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 light:hover:bg-cyan-300 text-on-accent font-semibold text-xs shadow-lg shadow-cyan-950/40 transition-all duration-200 active:scale-[0.98] cursor-pointer focus-visible:ring-2 focus-visible:ring-cyan-300"
         >
           <Plus className="w-4 h-4" />
           <span>Connect New Repository</span>
@@ -174,7 +174,7 @@ export const RepositoriesTab: React.FC<RepositoriesTabProps> = ({
                       type="button"
                       disabled={isBusy}
                       onClick={() => onDeploy(repo.id)}
-                      className={`${ACTION_BUTTON_CLASS} bg-cyan-500 hover:bg-cyan-400 text-zinc-950`}
+                      className={`${ACTION_BUTTON_CLASS} bg-cyan-500 hover:bg-cyan-400 light:hover:bg-cyan-300 text-on-accent`}
                     >
                       {isBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Rocket className="w-3.5 h-3.5" />}
                       Deploy

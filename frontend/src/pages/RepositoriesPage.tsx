@@ -12,6 +12,7 @@ import { useBuildActions } from "../hooks/useBuildActions";
 import { useRepositoryActions } from "../hooks/useRepositoryActions";
 import { FolderGit2 } from "lucide-react";
 import type { Build, ImportedRepository, RepositorySettingsPayload } from "../types/dashboard";
+import { pageTitle } from "../lib/config";
 
 export const RepositoriesPage: React.FC = () => {
   const navigate = useNavigate();
@@ -88,6 +89,7 @@ export const RepositoriesPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans selection:bg-zinc-800 selection:text-zinc-100">
+      <title>{pageTitle("Repositories")}</title>
       <Sidebar />
       <Header />
 

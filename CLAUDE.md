@@ -34,9 +34,9 @@ backend/src/
   services/   AWS and GitHub clients: codebuild (+ codebuild.buildspec.ts), s3, cloudwatch, github, build-poller
 frontend/src/
   components/ ui parts; dashboard/ and layout/ groups
-  context/    AuthContext
+  context/    AuthContext, ThemeContext (light/dark/system)
   hooks/      data fetching and mutations (useUserRepositories, useGitHubRepos, ...)
-  lib/        apiClient.ts (the only axios instance), tokenStorage.ts
+  lib/        apiClient.ts (the only axios instance), tokenStorage.ts, theme.ts (theme helpers), subdomain.ts, format.ts
   pages/      routable views
   types/      shared TS types
 infra/        see infra/README.md
@@ -57,7 +57,6 @@ infra/        see infra/README.md
 Skills in `.claude/skills/` cover repeatable tasks: `new-backend-module`, `new-frontend-feature`.
 
 ## Known gaps
-- Dashboard page still uses hard-coded sample data.
-- Temporary `console.log` of the auth token in `frontend/src/lib/apiClient.ts` and `tokenStorage.ts` must be removed.
-- A few eslint `react-hooks/set-state-in-effect` errors in `AuthCallbackPage`, `DomainsPage`, `RepositoriesPage`.
+- 7 eslint errors remain: `react-hooks/set-state-in-effect` in `AuthContext`, `AuthCallbackPage`, `ImportRepositoryModal`, `useGitHubRepos`, `useUserRepositories`, and `react-refresh/only-export-components` in `AuthContext` (`useAuth` shares the file with the provider).
 - Fastify `setErrorHandler` is not set up yet; routes map errors inline by `err.code`.
+- Push-to-deploy needs `PUBLIC_API_URL` (a public tunnel such as ngrok in local dev; trailing slash is stripped). Verified end to end with a real push. Webhooks are only created at import, so repos imported earlier have none.

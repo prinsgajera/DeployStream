@@ -8,6 +8,7 @@ import { useBuilds } from "../hooks/useBuilds";
 import { useRepositoryActions } from "../hooks/useRepositoryActions";
 import { ACTIVE_BUILD_STATUSES } from "../types/dashboard";
 import { Globe, ShieldCheck, CheckCircle2 } from "lucide-react";
+import { pageTitle } from "../lib/config";
 
 const NOTICE_RESET_MS = 4000;
 
@@ -38,6 +39,7 @@ export const DomainsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans selection:bg-zinc-800 selection:text-zinc-100">
+      <title>{pageTitle("Domains")}</title>
       <Sidebar />
       <Header />
 

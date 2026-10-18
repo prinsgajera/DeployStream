@@ -6,7 +6,8 @@ import { BuildStatusBadge } from "../components/dashboard/BuildStatusBadge";
 import { useUserRepositories } from "../hooks/useUserRepositories";
 import { useBuilds } from "../hooks/useBuilds";
 import { formatDuration, formatRelativeTime } from "../lib/format";
-import { LayoutDashboard, FolderGit2, Rocket, Globe, ArrowRight, Activity, Clock } from "lucide-react";
+import { LayoutDashboard, FolderGit2, Rocket, Globe, ArrowRight, Activity, Clock, Terminal } from "lucide-react";
+import { pageTitle } from "../lib/config";
 
 const RECENT_BUILD_COUNT = 5;
 const PERCENT = 100;
@@ -71,6 +72,7 @@ export const DashboardPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans selection:bg-zinc-800 selection:text-zinc-100">
+      <title>{pageTitle("Dashboard")}</title>
       <Sidebar />
       <Header />
 
@@ -152,6 +154,7 @@ export const DashboardPage: React.FC = () => {
                       <th className="py-3 px-4">Started</th>
                       <th className="py-3 px-4">Duration</th>
                       <th className="py-3 px-5">Status</th>
+                      <th className="py-3 px-5 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-800/60 text-xs">
@@ -172,6 +175,16 @@ export const DashboardPage: React.FC = () => {
                         <td className="py-3.5 px-4 font-mono text-zinc-400">{formatDuration(build.durationSeconds)}</td>
                         <td className="py-3.5 px-5">
                           <BuildStatusBadge status={build.status} />
+                        </td>
+                        <td className="py-3.5 px-5 text-right">
+                          <Link
+                            to={`/deployments/${build.id}`}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-100 font-mono text-xs font-semibold transition-all duration-200 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-cyan-500"
+                            aria-label={`View logs for ${repositoryNames.get(build.repositoryId) ?? "deleted repository"}`}
+                          >
+                            <Terminal className="w-3.5 h-3.5" />
+                            View Logs
+                          </Link>
                         </td>
                       </tr>
                     ))}

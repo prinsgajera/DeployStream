@@ -3,6 +3,8 @@ import { Sidebar } from "../components/layout/Sidebar";
 import { Header } from "../components/layout/Header";
 import { useAuth } from "../hooks/useAuth";
 import { GITHUB_LOGIN_URL } from "../context/AuthContext";
+import { ThemeToggle } from "../components/ThemeToggle";
+import { useTheme } from "../hooks/useTheme";
 import {
   User as UserIcon,
   Key,
@@ -17,6 +19,8 @@ import {
   Smartphone,
   Settings as SettingsIcon,
 } from "lucide-react";
+import { pageTitle } from "../lib/config";
+import { TAB_ACTIVE_CLASS, TAB_INACTIVE_CLASS } from "../lib/tabStyles";
 
 interface ApiKeyItem {
   id: string;
@@ -28,6 +32,7 @@ interface ApiKeyItem {
 
 export const ProfileSettingsPage: React.FC = () => {
   const { user } = useAuth();
+  const { preference, resolvedTheme } = useTheme();
   const [activeTab, setActiveTab] = useState<"profile" | "github" | "tokens" | "security">("profile");
 
   // Profile Form State
@@ -87,6 +92,7 @@ export const ProfileSettingsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans selection:bg-zinc-800">
+      <title>{pageTitle("Settings")}</title>
       <Sidebar />
       <Header />
 
@@ -118,11 +124,7 @@ export const ProfileSettingsPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setActiveTab("profile")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                activeTab === "profile"
-                  ? "bg-zinc-800 text-cyan-400 border border-cyan-500/20 shadow-sm"
-                  : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900"
-              }`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${activeTab === "profile" ? TAB_ACTIVE_CLASS : TAB_INACTIVE_CLASS}`}
             >
               <UserIcon className="w-4 h-4" />
               <span>Profile Details</span>
@@ -131,11 +133,7 @@ export const ProfileSettingsPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setActiveTab("github")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                activeTab === "github"
-                  ? "bg-zinc-800 text-cyan-400 border border-cyan-500/20 shadow-sm"
-                  : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900"
-              }`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${activeTab === "github" ? TAB_ACTIVE_CLASS : TAB_INACTIVE_CLASS}`}
             >
               <svg className="w-4 h-4 fill-current text-zinc-400" viewBox="0 0 24 24">
                 <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
@@ -146,11 +144,7 @@ export const ProfileSettingsPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setActiveTab("tokens")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                activeTab === "tokens"
-                  ? "bg-zinc-800 text-cyan-400 border border-cyan-500/20 shadow-sm"
-                  : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900"
-              }`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${activeTab === "tokens" ? TAB_ACTIVE_CLASS : TAB_INACTIVE_CLASS}`}
             >
               <Key className="w-4 h-4" />
               <span>API Access Keys</span>
@@ -159,11 +153,7 @@ export const ProfileSettingsPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setActiveTab("security")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                activeTab === "security"
-                  ? "bg-zinc-800 text-cyan-400 border border-cyan-500/20 shadow-sm"
-                  : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900"
-              }`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${activeTab === "security" ? TAB_ACTIVE_CLASS : TAB_INACTIVE_CLASS}`}
             >
               <ShieldCheck className="w-4 h-4" />
               <span>Security & Sessions</span>
@@ -172,6 +162,7 @@ export const ProfileSettingsPage: React.FC = () => {
 
           {/* TAB 1: PROFILE DETAILS */}
           {activeTab === "profile" && (
+            <>
             <div className="bg-zinc-900/70 border border-zinc-800/80 rounded-2xl p-6 shadow-sm space-y-6">
               <div className="flex items-center gap-4">
                 {user?.avatarUrl ? (
@@ -241,7 +232,7 @@ export const ProfileSettingsPage: React.FC = () => {
                   )}
                   <button
                     type="submit"
-                    className="ml-auto flex items-center gap-2 px-5 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-zinc-950 font-semibold text-xs transition-all active:scale-[0.98] cursor-pointer shadow-md"
+                    className="ml-auto flex items-center gap-2 px-5 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 light:hover:bg-cyan-300 text-on-accent font-semibold text-xs transition-all active:scale-[0.98] cursor-pointer shadow-md"
                   >
                     <Save className="w-4 h-4" />
                     <span>Save Changes</span>
@@ -249,6 +240,24 @@ export const ProfileSettingsPage: React.FC = () => {
                 </div>
               </form>
             </div>
+
+            <section
+              aria-labelledby="appearance-heading"
+              className="bg-zinc-900/70 border border-zinc-800/80 rounded-2xl p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+            >
+              <div>
+                <h3 id="appearance-heading" className="text-sm font-bold text-zinc-100">
+                  Appearance
+                </h3>
+                <p className="text-xs text-zinc-400 mt-1">
+                  {preference === "system"
+                    ? `Following your system setting (currently ${resolvedTheme}).`
+                    : `Always use the ${preference} theme.`}
+                </p>
+              </div>
+              <ThemeToggle showLabels />
+            </section>
+            </>
           )}
 
           {/* TAB 2: GITHUB INTEGRATION */}
@@ -320,7 +329,7 @@ export const ProfileSettingsPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleCreateApiKey}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-zinc-950 font-semibold text-xs transition-colors cursor-pointer"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-400 light:hover:bg-cyan-300 text-on-accent font-semibold text-xs transition-colors cursor-pointer"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Generate Key</span>

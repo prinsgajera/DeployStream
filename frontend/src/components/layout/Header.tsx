@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { Link } from "react-router-dom";
+import { ThemeToggle } from "../ThemeToggle";
 import {
   Search,
   Bell,
@@ -16,9 +17,9 @@ export const Header: React.FC = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   return (
-    <header className="fixed top-0 left-64 right-0 h-16 bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-800/80 z-30 px-6 flex items-center justify-between font-sans selection:bg-zinc-800 selection:text-zinc-100">
+    <header className="fixed top-0 left-64 right-0 h-16 bg-zinc-950/80 light:bg-zinc-900/90 light:shadow-sm light:shadow-black/5 backdrop-blur-xl border-b border-zinc-800/80 z-30 px-6 flex items-center justify-between font-sans selection:bg-zinc-800 selection:text-zinc-100">
       <div className="flex items-center gap-4 flex-1 max-w-md">
-        <label className="flex items-center gap-2.5 w-full h-9 px-3 bg-zinc-900/80 border border-zinc-800 rounded-lg shadow-inner cursor-text transition-all duration-200 focus-within:border-cyan-500 focus-within:ring-1 focus-within:ring-cyan-500/50">
+        <label className="flex items-center gap-2.5 w-full h-9 px-3 bg-zinc-900/80 light:bg-zinc-950 border border-zinc-800 rounded-lg shadow-inner cursor-text transition-all duration-200 focus-within:border-cyan-500 focus-within:ring-1 focus-within:ring-cyan-500/50">
           <Search className="w-4 h-4 shrink-0 text-zinc-400" />
           <input
             type="text"
@@ -26,7 +27,7 @@ export const Header: React.FC = () => {
             placeholder="Search deployments, commit SHA, clusters... (⌘K)"
             className="flex-1 min-w-0 h-full bg-transparent text-xs font-mono text-zinc-200 placeholder:text-zinc-400 focus:outline-none"
           />
-          <kbd className="shrink-0 flex items-center justify-center h-5 min-w-5 px-1.5 rounded border border-zinc-800 bg-zinc-950 text-xs font-mono leading-none text-zinc-400">
+          <kbd className="shrink-0 flex items-center justify-center h-5 min-w-5 px-1.5 rounded border border-zinc-800 bg-zinc-950 light:bg-zinc-900 text-xs font-mono leading-none text-zinc-400">
             /
           </kbd>
         </label>
@@ -36,7 +37,7 @@ export const Header: React.FC = () => {
       <div className="flex items-center gap-5">
         {/* System Health Badge */}
         <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-900 border border-zinc-800">
-          <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]" />
+          <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_var(--glow-emerald)]" />
           <span className="text-xs font-mono text-zinc-300 font-medium">
             All Systems Normal
           </span>
@@ -44,10 +45,12 @@ export const Header: React.FC = () => {
 
         <div className="h-4 w-px bg-zinc-800 hidden sm:block" />
 
+        <ThemeToggle />
+
         {/* Notifications Icon Button */}
         <button
           type="button"
-          className="relative text-zinc-400 hover:text-zinc-100 transition-colors p-1.5 rounded-lg hover:bg-zinc-900 cursor-pointer"
+          className="relative text-zinc-400 hover:text-zinc-100 transition-colors p-1.5 rounded-lg hover:bg-zinc-900 light:hover:bg-zinc-950 cursor-pointer"
         >
           <Bell className="w-4 h-4" />
           <span className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-cyan-400" />
@@ -58,7 +61,7 @@ export const Header: React.FC = () => {
           <button
             type="button"
             onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="flex items-center gap-2 pl-1 p-1 rounded-lg hover:bg-zinc-900 transition-colors cursor-pointer"
+            className="flex items-center gap-2 pl-1 p-1 rounded-lg hover:bg-zinc-900 light:hover:bg-zinc-950 transition-colors cursor-pointer"
           >
             {user?.avatarUrl ? (
               <img
