@@ -42,23 +42,21 @@ export const AuthCallbackPage: React.FC = () => {
       return;
     }
 
-    console.log("token found", token)
-
     tokenStorage.set(token);
     window.history.replaceState(null, "", window.location.pathname);
 
-    // apiClient
-    //   .get<User>("/auth/me")
-    //   .then(({ data }) => {
-    //     setUser(data);
-    //     setAuthenticatedUser(data);
-    //     setStatus("success");
-    //   })
-    //   .catch(() => {
-    //     tokenStorage.clear();
-    //     setStatus("error");
-    //     setErrorMessage("Failed to verify authentication session.");
-    //   });
+    apiClient
+      .get<User>("/auth/me")
+      .then(({ data }) => {
+        setUser(data);
+        setAuthenticatedUser(data);
+        setStatus("success");
+      })
+      .catch(() => {
+        tokenStorage.clear();
+        setStatus("error");
+        setErrorMessage("Failed to verify authentication session.");
+      });
   }, [searchParams, setUser]);
 
   return (

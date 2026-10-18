@@ -55,13 +55,7 @@ const buildSchema = new Schema<IBuildDocument>(
     commitMessage: { type: String, default: null },
     commitAuthor: { type: String, default: null },
     branch: { type: String, default: null },
-    awsCodeBuildId: {
-      type: String,
-      default: null,
-      unique: true,
-      sparse: true,
-      index: true,
-    },
+    awsCodeBuildId: { type: String, default: null },
     logGroupName: { type: String, default: null },
     logStreamName: { type: String, default: null },
     startedAt: { type: Date, default: Date.now },
@@ -81,6 +75,11 @@ const buildSchema = new Schema<IBuildDocument>(
       },
     },
   }
+);
+
+buildSchema.index(
+  { awsCodeBuildId: 1 },
+  { unique: true, partialFilterExpression: { awsCodeBuildId: { $type: "string" } } }
 );
 
 export const BuildModel: Model<IBuildDocument> =

@@ -88,12 +88,27 @@ export async function syncBuildStatus(buildId: string): Promise<IBuildDocument |
   const build = await BuildModel.findById(buildId);
   if (!build?.awsCodeBuildId) return build;
 
-  if (TERMINAL_STATUSES.includes(build.status)) {
+  const needsLogStream = !build.logStreamName;
+  if (TERMINAL_STATUSES.includes(build.status) && !needsLogStream) {
     return build;
   }
 
   const awsBuild = await getCodeBuildStatus(build.awsCodeBuildId);
   if (!awsBuild) return build;
+
+  if (needsLogStream && awsBuild.logs?.streamName) {
+    await BuildModel.updateOne(
+      { _id: build._id },
+      {
+        logGroupName: awsBuild.logs.groupName ?? build.logGroupName,
+        logStreamName: awsBuild.logs.streamName,
+      }
+    );
+  }
+
+  if (TERMINAL_STATUSES.includes(build.status)) {
+    return BuildModel.findById(build._id);
+  }
 
   const phaseMap: Record<string, BuildStatus> = {
     SUCCEEDED: BuildStatus.SUCCESS,

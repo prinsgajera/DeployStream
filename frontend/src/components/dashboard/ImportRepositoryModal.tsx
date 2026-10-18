@@ -11,6 +11,7 @@ import {
   Key,
   Rocket,
   GitBranch,
+  ChevronDown,
   RefreshCw,
   AlertCircle,
   CheckCircle2,
@@ -19,6 +20,7 @@ import {
 import type { GitHubRepoOption, EnvironmentVariable, ImportedRepository } from "../../types/dashboard";
 import { useGitHubRepos } from "../../hooks/useGitHubRepos";
 import { apiClient } from "../../lib/apiClient";
+import { DEPLOYED_BASE_DOMAIN } from "../../lib/config";
 import axios from "axios";
 
 interface ImportRepositoryModalProps {
@@ -26,6 +28,10 @@ interface ImportRepositoryModalProps {
   onClose: () => void;
   onImportComplete: (repo: ImportedRepository) => void;
 }
+
+const FIELD_LABEL_CLASS = "block text-xs font-mono uppercase text-zinc-400 mb-1.5 tracking-wider";
+const FIELD_CLASS =
+  "w-full h-10 bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 text-xs font-mono text-zinc-200 focus:outline-none focus:border-cyan-500/60 transition-colors";
 
 function generateSubdomain(fullName: string): string {
   return fullName
@@ -359,77 +365,81 @@ export const ImportRepositoryModal: React.FC<ImportRepositoryModalProps> = ({
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-mono uppercase text-zinc-400 mb-1.5 tracking-wider">
+                  <label htmlFor="import-framework" className={FIELD_LABEL_CLASS}>
                     Framework Preset
                   </label>
-                  <select
-                    value={framework}
-                    onChange={(e) => setFramework(e.target.value)}
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-cyan-500/60 font-mono cursor-pointer transition-colors"
-                  >
-                    <option value="React / Vite">React / Vite</option>
-                    <option value="Next.js 14 App">Next.js 14 App</option>
-                    <option value="Node.js / Express">Node.js / Express</option>
-                    <option value="Go / Gin">Go / Gin</option>
-                    <option value="Python / FastAPI">Python / FastAPI</option>
-                    <option value="Vue / Vite">Vue / Vite</option>
-                    <option value="SvelteKit">SvelteKit</option>
-                    <option value="Astro">Astro</option>
-                  </select>
+                  <div className="relative">
+                    <select
+                      id="import-framework"
+                      value={framework}
+                      onChange={(e) => setFramework(e.target.value)}
+                      className={`${FIELD_CLASS} appearance-none pr-10 cursor-pointer`}
+                    >
+                      <option value="React / Vite">React / Vite</option>
+                      <option value="Next.js 14 App">Next.js 14 App</option>
+                      <option value="Node.js / Express">Node.js / Express</option>
+                      <option value="Go / Gin">Go / Gin</option>
+                      <option value="Python / FastAPI">Python / FastAPI</option>
+                      <option value="Vue / Vite">Vue / Vite</option>
+                      <option value="SvelteKit">SvelteKit</option>
+                      <option value="Astro">Astro</option>
+                    </select>
+                    <ChevronDown className="w-4 h-4 absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
+                  </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-mono uppercase text-zinc-400 mb-1.5 tracking-wider">
+                  <label htmlFor="import-branch" className={FIELD_LABEL_CLASS}>
                     Production Branch
                   </label>
                   <div className="relative">
-                    <GitBranch className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+                    <GitBranch className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
                     <input
+                      id="import-branch"
                       type="text"
                       value={branch}
                       onChange={(e) => setBranch(e.target.value)}
-                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl pl-9 pr-4 py-2.5 text-xs font-mono text-zinc-200 focus:outline-none focus:border-cyan-500/60 transition-colors"
+                      className={`${FIELD_CLASS} pl-10`}
                     />
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-4 pt-2 border-t border-zinc-800/60">
+              <div className="space-y-4 pt-4 border-t border-zinc-800/60">
                 <div>
-                  <label className="block text-xs font-mono uppercase text-zinc-400 mb-1.5 tracking-wider">
+                  <label htmlFor="import-build-command" className={FIELD_LABEL_CLASS}>
                     Build Command
                   </label>
                   <input
+                    id="import-build-command"
                     type="text"
                     value={buildCommand}
                     onChange={(e) => setBuildCommand(e.target.value)}
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2 text-xs font-mono text-cyan-400 focus:outline-none focus:border-cyan-500/60 transition-colors"
+                    className={`${FIELD_CLASS} text-cyan-400`}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-mono uppercase text-zinc-400 mb-1.5 tracking-wider">
+                  <label htmlFor="import-output-directory" className={FIELD_LABEL_CLASS}>
                     Output Directory
                   </label>
                   <input
+                    id="import-output-directory"
                     type="text"
                     value={outputDirectory}
                     onChange={(e) => setOutputDirectory(e.target.value)}
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2 text-xs font-mono text-zinc-200 focus:outline-none focus:border-cyan-500/60 transition-colors"
+                    className={FIELD_CLASS}
                   />
                 </div>
               </div>
 
-              {/* Subdomain Preview */}
-              <div className="bg-zinc-950/80 p-3.5 rounded-xl border border-zinc-800/60">
-                <p className="text-[10px] font-mono uppercase text-zinc-500 mb-1 tracking-wider">
-                  Deployment URL (auto-generated)
-                </p>
-                <p className="text-sm font-mono text-zinc-100">
+              <div className="bg-zinc-950/80 p-4 rounded-xl border border-zinc-800/60">
+                <p className={`${FIELD_LABEL_CLASS} mb-2`}>Deployment URL (auto-generated)</p>
+                <p className="text-sm font-mono text-zinc-100 break-all">
                   <span className="text-cyan-400">{subdomain}</span>
-                  <span className="text-zinc-500">.deploystream.io</span>
+                  <span className="text-zinc-500">{DEPLOYED_BASE_DOMAIN ? `.${DEPLOYED_BASE_DOMAIN}` : ""}</span>
                 </p>
-                <p className="text-[10px] text-zinc-600 mt-1">Customizable later in project settings</p>
+                <p className="text-xs text-zinc-500 mt-2">The subdomain is fixed once the repository is imported.</p>
               </div>
             </div>
           )}

@@ -1,11 +1,11 @@
 import { Types } from "mongoose";
-import { RepositoryModel, type IRepositoryDocument } from "../../models/repository.model.js";
+import { RepositoryModel, type IRepositoryDocument, type IEnvVar } from "../../models/repository.model.js";
 import { decryptToken } from "../../lib/crypto.js";
 import { UserModel } from "../../models/user.model.js";
 import { BuildModel } from "../../models/build.model.js";
 import { createPushWebhook, deleteWebhook } from "../../services/github.service.js";
 import { deleteSiteFiles } from "../../services/s3.service.js";
-import { encryptSecretEnvVars } from "./env-vars.js";
+import { encryptSecretEnvVars, maskSecretEnvVars, mergeEnvVars } from "./env-vars.js";
 import type { FastifyBaseLogger } from "fastify";
 
 export interface GitHubRepo {
@@ -117,10 +117,40 @@ export async function importRepository(
   return repository;
 }
 
+export function serializeRepository(repository: IRepositoryDocument): Record<string, unknown> {
+  return { ...repository.toJSON(), envVars: maskSecretEnvVars(repository.envVars) };
+}
+
 export async function getUserRepositories(userId: string): Promise<IRepositoryDocument[]> {
-  return RepositoryModel.find({ userId: new Types.ObjectId(userId) })
-    .sort({ createdAt: -1 })
-    .select("-envVars.value");
+  return RepositoryModel.find({ userId: new Types.ObjectId(userId) }).sort({ createdAt: -1 });
+}
+
+export interface UpdateRepositorySettingsPayload {
+  branch?: string;
+  framework?: string;
+  buildCommand?: string;
+  outputDirectory?: string;
+  envVars?: IEnvVar[];
+}
+
+export async function updateRepositorySettings(
+  userId: string,
+  repositoryId: string,
+  payload: UpdateRepositorySettingsPayload
+): Promise<IRepositoryDocument | null> {
+  const repository = await RepositoryModel.findOne({
+    _id: repositoryId,
+    userId: new Types.ObjectId(userId),
+  });
+  if (!repository) return null;
+
+  const { envVars, ...fields } = payload;
+  repository.set(fields);
+  if (envVars) {
+    repository.envVars = mergeEnvVars(repository.envVars, envVars);
+  }
+
+  return repository.save();
 }
 
 export async function deleteUserRepository(
@@ -169,5 +199,5 @@ export async function updateAutoDeployStatus(
     { _id: repositoryId, userId: new Types.ObjectId(userId) },
     { $set: { autoDeploy } },
     { new: true }
-  ).select("-envVars.value");
+  );
 }

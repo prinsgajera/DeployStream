@@ -14,7 +14,7 @@ Billing → Budgets → Create budget → Zero-spend or monthly cost budget of *
 - `/aws/codebuild/deploystream-build-runner`, retention **7 days**.
 
 ## 3. CodeBuild project `deploystream-build-runner`
-- Source: **No source**. Buildspec: paste `infra/buildspec.yml` (Insert build commands → Switch to editor).
+- Source: **No source**. Buildspec: the console requires one, so paste a placeholder (`version: 0.2` / `phases: build: commands: [echo placeholder]`). The real buildspec lives in `backend/src/services/codebuild.buildspec.ts` and is sent with every build (`buildspecOverride`), so there is nothing to keep in sync.
 - Environment: Managed image, Amazon Linux, Standard runtime, image `aws/codebuild/amazonlinux-x86_64-standard:5.0` (or latest), compute **Linux small (3 GB, 2 vCPU)**.
 - Service role: create new. Then IAM → that role → Add inline policy → `infra/iam-codebuild-s3-policy.json`.
 - Additional configuration: timeout **10 minutes**, queued timeout 5 minutes. Logs: CloudWatch, group name from step 2.

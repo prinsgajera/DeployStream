@@ -1,43 +1,33 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { Sidebar } from "../components/layout/Sidebar";
 import { Header } from "../components/layout/Header";
 import { RepositoriesTab } from "../components/dashboard/RepositoriesTab";
 import { ImportRepositoryModal } from "../components/dashboard/ImportRepositoryModal";
+import { RepositorySettingsModal } from "../components/dashboard/RepositorySettingsModal";
 import { useUserRepositories } from "../hooks/useUserRepositories";
 import { useToggleAutoDeploy } from "../hooks/useToggleAutoDeploy";
+import { useBuilds } from "../hooks/useBuilds";
+import { useBuildActions } from "../hooks/useBuildActions";
+import { useRepositoryActions } from "../hooks/useRepositoryActions";
 import { FolderGit2 } from "lucide-react";
-import type { RepositoryItem, ImportedRepository } from "../types/dashboard";
-
-function mapImportedToRepositoryItem(repo: ImportedRepository): RepositoryItem {
-  return {
-    id: repo.id,
-    repoName: repo.repoName,
-    fullName: repo.fullName,
-    githubRepoId: repo.githubRepoId,
-    subdomain: repo.subdomain,
-    branch: repo.branch,
-    framework: repo.framework,
-    buildCommand: repo.buildCommand,
-    outputDirectory: repo.outputDirectory,
-    status: repo.isActive ? "active" : "inactive",
-    isActive: repo.isActive,
-    autoDeploy: repo.autoDeploy,
-    lastDeployed: "Just now",
-    commitHash: "7a9f2c1",
-    commitMessage: "Initial deployment from GitHub",
-    latencyMs: Math.floor(Math.random() * 40) + 15,
-    environment: "Production",
-    s3BucketUrl: repo.s3BucketUrl,
-    createdAt: repo.createdAt,
-    updatedAt: repo.updatedAt,
-  };
-}
+import type { Build, ImportedRepository, RepositorySettingsPayload } from "../types/dashboard";
 
 export const RepositoriesPage: React.FC = () => {
+  const navigate = useNavigate();
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [settingsRepositoryId, setSettingsRepositoryId] = useState<string | null>(null);
   const [autoDeployOverrides, setAutoDeployOverrides] = useState<Record<string, boolean>>({});
 
   const { repositories: importedRepos, isLoading: reposLoading, refetch } = useUserRepositories();
+  const { builds, refetch: refetchBuilds } = useBuilds();
+  const { triggerBuild, pendingIds: deployingIds, error: deployError } = useBuildActions(refetchBuilds);
+  const {
+    deleteRepository,
+    updateSettings,
+    pendingIds: repositoryActionIds,
+    error: repositoryError,
+  } = useRepositoryActions(refetch);
 
   const handleOptimisticUpdate = useCallback((id: string, value: boolean) => {
     setAutoDeployOverrides((prev) => ({ ...prev, [id]: value }));
@@ -47,28 +37,53 @@ export const RepositoriesPage: React.FC = () => {
     setAutoDeployOverrides((prev) => ({ ...prev, [id]: originalValue }));
   }, []);
 
-  const { toggle, pendingIds } = useToggleAutoDeploy(handleOptimisticUpdate, handleRevert);
+  const { toggle, pendingIds: toggleIds } = useToggleAutoDeploy(handleOptimisticUpdate, handleRevert);
 
-  const repositories: RepositoryItem[] = importedRepos.map((repo) => {
-    const mapped = mapImportedToRepositoryItem(repo);
-    if (autoDeployOverrides[repo.id] !== undefined) {
-      mapped.autoDeploy = autoDeployOverrides[repo.id]!;
-    }
-    return mapped;
-  });
+  const repositories: ImportedRepository[] = importedRepos.map((repo) => ({
+    ...repo,
+    autoDeploy: autoDeployOverrides[repo.id] ?? repo.autoDeploy,
+  }));
 
-  const handleToggleAutoDeploy = useCallback(
-    (id: string, currentValue: boolean) => {
-      void toggle(id, currentValue);
-    },
-    [toggle]
+  const latestBuildByRepository = useMemo(() => {
+    const latest = new Map<string, Build>();
+    builds.forEach((build) => {
+      if (!latest.has(build.repositoryId)) latest.set(build.repositoryId, build);
+    });
+    return latest;
+  }, [builds]);
+
+  const pendingActionIds = useMemo(
+    () => new Set([...deployingIds, ...repositoryActionIds]),
+    [deployingIds, repositoryActionIds]
   );
 
-  const handleImportComplete = useCallback(
-    (_repo: ImportedRepository) => {
-      refetch();
+  const settingsRepository = repositories.find((repo) => repo.id === settingsRepositoryId) ?? null;
+
+  const handleDeploy = useCallback(
+    async (id: string): Promise<void> => {
+      const build = await triggerBuild(id);
+      if (build) navigate("/deployments");
     },
-    [refetch]
+    [triggerBuild, navigate]
+  );
+
+  const handleDelete = useCallback(
+    async (repository: ImportedRepository): Promise<void> => {
+      const confirmed = window.confirm(
+        `Delete ${repository.repoName}? This removes its deployed files, build history and GitHub webhook.`
+      );
+      if (confirmed) await deleteRepository(repository.id);
+    },
+    [deleteRepository]
+  );
+
+  const handleSaveSettings = useCallback(
+    async (payload: RepositorySettingsPayload): Promise<void> => {
+      if (!settingsRepositoryId) return;
+      const saved = await updateSettings(settingsRepositoryId, payload);
+      if (saved) setSettingsRepositoryId(null);
+    },
+    [settingsRepositoryId, updateSettings]
   );
 
   return (
@@ -84,25 +99,34 @@ export const RepositoriesPage: React.FC = () => {
                 <div className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
                   <FolderGit2 className="w-5 h-5" />
                 </div>
-                <h1 className="text-xl font-bold tracking-tight text-zinc-100">
-                  Repositories
-                </h1>
+                <h1 className="text-xl font-bold tracking-tight text-zinc-100">Repositories</h1>
                 <span className="px-2.5 py-0.5 rounded-full bg-zinc-900 border border-zinc-800 text-cyan-400 font-mono text-xs font-semibold">
                   {repositories.length} connected
                 </span>
               </div>
               <p className="text-xs text-zinc-400 mt-1">
-                Manage your imported GitHub repositories, CI/CD trigger automation, and build statuses.
+                Deploy, configure and manage your imported GitHub repositories.
               </p>
             </div>
           </div>
 
+          {(deployError || (repositoryError && !settingsRepository)) && (
+            <p className="text-xs font-mono text-rose-400 bg-rose-950/40 border border-rose-900/40 rounded-lg p-3">
+              {deployError ?? repositoryError}
+            </p>
+          )}
+
           <RepositoriesTab
-            onOpenImportModal={() => setIsImportModalOpen(true)}
             repositories={repositories}
-            onToggleAutoDeploy={handleToggleAutoDeploy}
-            pendingToggleIds={pendingIds}
+            latestBuildByRepository={latestBuildByRepository}
+            pendingToggleIds={toggleIds}
+            pendingActionIds={pendingActionIds}
             isLoading={reposLoading}
+            onOpenImportModal={() => setIsImportModalOpen(true)}
+            onToggleAutoDeploy={(id, currentValue) => void toggle(id, currentValue)}
+            onDeploy={(id) => void handleDeploy(id)}
+            onOpenSettings={setSettingsRepositoryId}
+            onDelete={(repository) => void handleDelete(repository)}
           />
         </div>
       </main>
@@ -110,8 +134,19 @@ export const RepositoriesPage: React.FC = () => {
       <ImportRepositoryModal
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
-        onImportComplete={handleImportComplete}
+        onImportComplete={() => refetch()}
       />
+
+      {settingsRepository && (
+        <RepositorySettingsModal
+          key={settingsRepository.id}
+          repository={settingsRepository}
+          isSaving={repositoryActionIds.has(settingsRepository.id)}
+          error={repositoryError}
+          onClose={() => setSettingsRepositoryId(null)}
+          onSave={handleSaveSettings}
+        />
+      )}
     </div>
   );
 };

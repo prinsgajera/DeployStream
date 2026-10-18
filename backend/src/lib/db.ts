@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { env } from "../config/env.js";
+import { BuildModel } from "../models/build.model.js";
 
 export async function connectDB(): Promise<typeof mongoose> {
   if (mongoose.connection.readyState >= 1) {
@@ -8,6 +9,7 @@ export async function connectDB(): Promise<typeof mongoose> {
 
   try {
     const conn = await mongoose.connect(env.DATABASE_URL);
+    await BuildModel.syncIndexes();
     console.log(`🍃 MongoDB Connected: ${conn.connection.host}`);
     return conn;
   } catch (error) {

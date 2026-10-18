@@ -7,6 +7,7 @@ import {
   type EnvironmentVariable,
 } from "@aws-sdk/client-codebuild";
 import { env } from "../config/env.js";
+import { BUILDSPEC } from "./codebuild.buildspec.js";
 
 const client = new CodeBuildClient({
   region: env.AWS_REGION,
@@ -67,6 +68,7 @@ export async function startCodeBuild(
 ): Promise<CodeBuildStartResult> {
   const command = new StartBuildCommand({
     projectName: env.CODEBUILD_PROJECT_NAME,
+    buildspecOverride: BUILDSPEC,
     environmentVariablesOverride: [
       ...toUserEnvironmentVariables(params.userEnvVars ?? []),
       { name: "REPO_FULL_NAME", value: params.repoFullName, type: "PLAINTEXT" },

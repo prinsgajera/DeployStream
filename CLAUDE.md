@@ -8,7 +8,7 @@ GitHub push -> `POST /api/webhooks/github` (HMAC-verified) -> `triggerBuild` -> 
 ## Stack
 - **Backend** (`backend/`): Node, Fastify 5, TypeScript (ESM), **Mongoose** on MongoDB, TypeBox route schemas, zod for env validation, AWS SDK v3 (CodeBuild, S3, CloudWatch Logs), `@fastify/jwt`, `@fastify/oauth2`, `@fastify/websocket`.
 - **Frontend** (`frontend/`): React 19, Vite, TypeScript, Tailwind CSS v4 (CSS-first), react-router 7, axios, lucide-react.
-- **Infra** (`infra/`): buildspec, CloudFront function, IAM policies, and the console runbook. No IaC tooling; resources are created by hand in the console.
+- **Infra** (`infra/`): CloudFront function, IAM policies, and the console runbook (the buildspec lives in backend code). No IaC tooling; resources are created by hand in the console.
 
 ## Commands
 Package manager is **pnpm** in both apps.
@@ -31,7 +31,7 @@ backend/src/
   modules/    <feature>/{<feature>.routes,.schema,.service}.ts: auth, builds, health, repositories, webhooks
   plugins/    auth.plugin.ts (jwt + fastify.authenticate)
   routes/     index.ts mounts every module under API_PREFIX
-  services/   AWS and GitHub clients: codebuild, s3, cloudwatch, github, build-poller
+  services/   AWS and GitHub clients: codebuild (+ codebuild.buildspec.ts), s3, cloudwatch, github, build-poller
 frontend/src/
   components/ ui parts; dashboard/ and layout/ groups
   context/    AuthContext

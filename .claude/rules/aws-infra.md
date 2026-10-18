@@ -20,7 +20,7 @@ paths:
 
 ## Resources and names
 - S3 `deploystream-client-builds`, objects under `builds/<subdomain>/` (`buildS3KeyPrefix`), private with CloudFront OAC.
-- CodeBuild `deploystream-build-runner`, source `NO_SOURCE`, inline buildspec from `infra/buildspec.yml`. The backend overrides these env vars per build: `REPO_FULL_NAME`, `BRANCH`, `COMMIT_HASH`, `SUBDOMAIN`, `BUILD_CMD`, `OUTPUT_DIR`, `S3_BUCKET`, `GITHUB_TOKEN`, plus the user's own env vars (reserved names and `CODEBUILD_*` are filtered).
+- CodeBuild `deploystream-build-runner`, source `NO_SOURCE`; the buildspec is the `BUILDSPEC` constant in `backend/src/services/codebuild.buildspec.ts`, sent per build via `buildspecOverride` (the project's own buildspec is only a placeholder). The backend overrides these env vars per build: `REPO_FULL_NAME`, `BRANCH`, `COMMIT_HASH`, `SUBDOMAIN`, `BUILD_CMD`, `OUTPUT_DIR`, `S3_BUCKET`, `GITHUB_TOKEN`, plus the user's own env vars (reserved names and `CODEBUILD_*` are filtered).
 - Log group `/aws/codebuild/deploystream-build-runner`.
 - One CloudFront distribution with alternate domain `*.gajeraprins.shop` and the viewer-request function in `infra/cloudfront-function.js` (Host subdomain -> `/builds/<sub>/...`, SPA fallback to `index.html`).
 - Runbook for creating all of this by hand: `infra/README.md`. Keep it and the policy JSON in sync with code changes.

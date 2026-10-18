@@ -187,7 +187,7 @@ export const ProfileSettingsPage: React.FC = () => {
                 )}
                 <div>
                   <h3 className="text-base font-bold text-zinc-100">@{user?.username || "alex-dev"}</h3>
-                  <p className="text-xs font-mono text-zinc-400 mt-0.5">MongoDB Account ID: {user?.id || "65f9a2b1c4e..."}</p>
+                  <p className="text-xs font-mono text-zinc-400 mt-0.5">Account ID: {user?.id || "65f9a2b1c4e..."}</p>
                 </div>
               </div>
 

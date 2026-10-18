@@ -87,8 +87,48 @@ export const repositorySchemas = {
       isActive: { type: "boolean" },
       autoDeploy: { type: "boolean" },
       s3BucketUrl: { type: ["string", "null"] },
+      deployedUrl: { type: ["string", "null"] },
+      lastDeployedAt: { type: ["string", "null"] },
+      totalBuilds: { type: "number" },
+      successfulBuilds: { type: "number" },
+      envVars: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            key: { type: "string" },
+            value: { type: "string" },
+            isSecret: { type: "boolean" },
+          },
+        },
+      },
       createdAt: { type: "string" },
       updatedAt: { type: "string" },
+    },
+  },
+
+  patchSettingsBody: {
+    type: "object",
+    minProperties: 1,
+    additionalProperties: false,
+    properties: {
+      branch: { type: "string", minLength: 1 },
+      framework: { type: "string", minLength: 1 },
+      buildCommand: { type: "string", minLength: 1 },
+      outputDirectory: { type: "string", minLength: 1 },
+      envVars: {
+        type: "array",
+        items: {
+          type: "object",
+          required: ["key", "value", "isSecret"],
+          additionalProperties: false,
+          properties: {
+            key: { type: "string", pattern: "^[A-Za-z_][A-Za-z0-9_]*$" },
+            value: { type: "string" },
+            isSecret: { type: "boolean" },
+          },
+        },
+      },
     },
   },
 

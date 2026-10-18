@@ -1,45 +1,32 @@
-export type BuildStatusType = "SUCCESS" | "BUILDING" | "QUEUED" | "FAILED" | "IDLE";
+export type BuildStatusType = "IDLE" | "QUEUED" | "BUILDING" | "SUCCESS" | "FAILED" | "CANCELLED";
 
-export interface RepositoryItem {
-  id: string;
-  repoName: string;
-  fullName: string;
-  githubRepoId: string;
-  subdomain: string;
-  branch: string;
-  framework: string;
-  buildCommand: string;
-  outputDirectory: string;
-  status: "active" | "inactive" | "building";
-  lastDeployed: string;
-  commitHash: string;
-  commitMessage: string;
-  autoDeploy: boolean;
-  latencyMs: number;
-  environment: string;
-  isActive: boolean;
-  s3BucketUrl?: string | null;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface BuildHistoryItem {
+export interface Build {
   id: string;
   repositoryId: string;
-  repoName: string;
-  commitHash: string;
-  commitMessage: string;
-  author: string;
-  authorAvatar?: string;
-  branch: string;
-  startedAt: string;
-  duration: string;
   status: BuildStatusType;
-  logs?: string[];
+  triggeredBy: "webhook" | "manual";
+  commitHash: string | null;
+  commitMessage: string | null;
+  commitAuthor: string | null;
+  branch: string | null;
+  awsCodeBuildId: string | null;
+  logGroupName: string | null;
+  logStreamName: string | null;
+  startedAt: string;
+  endedAt: string | null;
+  durationSeconds: number | null;
+  deployedUrl: string | null;
+  errorMessage: string | null;
 }
 
 export interface EnvironmentVariable {
   id: string;
+  key: string;
+  value: string;
+  isSecret: boolean;
+}
+
+export interface RepositoryEnvVar {
   key: string;
   value: string;
   isSecret: boolean;
@@ -70,6 +57,21 @@ export interface ImportedRepository {
   isActive: boolean;
   autoDeploy: boolean;
   s3BucketUrl: string | null;
+  deployedUrl: string | null;
+  lastDeployedAt: string | null;
+  totalBuilds: number;
+  successfulBuilds: number;
+  envVars: RepositoryEnvVar[];
   createdAt: string;
   updatedAt: string;
 }
+
+export interface RepositorySettingsPayload {
+  branch: string;
+  framework: string;
+  buildCommand: string;
+  outputDirectory: string;
+  envVars: RepositoryEnvVar[];
+}
+
+export const ACTIVE_BUILD_STATUSES: readonly BuildStatusType[] = ["QUEUED", "BUILDING"];

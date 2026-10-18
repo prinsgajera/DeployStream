@@ -9,7 +9,6 @@ export const tokenStorage = {
     }
   },
   set(token: string): void {
-    console.log("token stored", token)
     try {
       window.localStorage.setItem(TOKEN_KEY, token);
     } catch {

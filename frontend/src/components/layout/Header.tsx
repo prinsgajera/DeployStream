@@ -17,19 +17,19 @@ export const Header: React.FC = () => {
 
   return (
     <header className="fixed top-0 left-64 right-0 h-16 bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-800/80 z-30 px-6 flex items-center justify-between font-sans selection:bg-zinc-800 selection:text-zinc-100">
-      {/* Search Input Bar */}
       <div className="flex items-center gap-4 flex-1 max-w-md">
-        <div className="relative w-full">
-          <Search className="w-4 h-4 absolute left-3 top-2.5 text-zinc-400" />
+        <label className="flex items-center gap-2.5 w-full h-9 px-3 bg-zinc-900/80 border border-zinc-800 rounded-lg shadow-inner cursor-text transition-all duration-200 focus-within:border-cyan-500 focus-within:ring-1 focus-within:ring-cyan-500/50">
+          <Search className="w-4 h-4 shrink-0 text-zinc-400" />
           <input
             type="text"
+            aria-label="Search deployments"
             placeholder="Search deployments, commit SHA, clusters... (⌘K)"
-            className="w-full bg-zinc-900/80 border border-zinc-800 rounded-lg pl-9 pr-10 py-1.5 text-xs font-mono text-zinc-200 placeholder:text-zinc-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 transition-all shadow-inner"
+            className="flex-1 min-w-0 h-full bg-transparent text-xs font-mono text-zinc-200 placeholder:text-zinc-400 focus:outline-none"
           />
-          <div className="absolute right-2.5 top-2 bg-zinc-950 px-1.5 py-0.5 rounded border border-zinc-800 text-[10px] font-mono text-zinc-400 pointer-events-none">
+          <kbd className="shrink-0 flex items-center justify-center h-5 min-w-5 px-1.5 rounded border border-zinc-800 bg-zinc-950 text-xs font-mono leading-none text-zinc-400">
             /
-          </div>
-        </div>
+          </kbd>
+        </label>
       </div>
 
       {/* Header Right Actions */}

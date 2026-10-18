@@ -6,6 +6,9 @@ import {
   getUserRepositories,
   deleteUserRepository,
   updateAutoDeployStatus,
+  updateRepositorySettings,
+  serializeRepository,
+  type UpdateRepositorySettingsPayload,
   type ImportRepositoryPayload,
 } from "./repositories.service.js";
 import { repositorySchemas } from "./repositories.schema.js";
@@ -73,7 +76,7 @@ async function repositoriesRoutes(fastify: FastifyInstance): Promise<void> {
 
       try {
         const repository = await importRepository(userId, payload, request.log);
-        return reply.status(201).send(repository.toJSON());
+        return reply.status(201).send(serializeRepository(repository));
       } catch (err) {
         const error = err as NodeJS.ErrnoException;
 
@@ -118,7 +121,7 @@ async function repositoriesRoutes(fastify: FastifyInstance): Promise<void> {
       const { userId } = request.user as { userId: string };
       try {
         const repos = await getUserRepositories(userId);
-        return reply.send(repos.map((r) => r.toJSON()));
+        return reply.send(repos.map(serializeRepository));
       } catch (err) {
         fastify.log.error({ err }, "Failed to fetch user repositories");
         return reply.status(500).send({
@@ -193,12 +196,53 @@ async function repositoriesRoutes(fastify: FastifyInstance): Promise<void> {
             message: "Repository not found.",
           });
         }
-        return reply.send(updated.toJSON());
+        return reply.send(serializeRepository(updated));
       } catch (err) {
         fastify.log.error({ err }, "Failed to update auto-deploy status");
         return reply.status(500).send({
           error: "Internal Server Error",
           message: "Failed to update auto-deploy status.",
+        });
+      }
+    }
+  );
+
+  fastify.patch<{ Params: RepoParams; Body: UpdateRepositorySettingsPayload }>(
+    "/repositories/:id",
+    {
+      preHandler: [fastify.authenticate],
+      schema: {
+        params: {
+          type: "object",
+          required: ["id"],
+          properties: { id: { type: "string" } },
+        },
+        body: repositorySchemas.patchSettingsBody,
+        response: {
+          200: repositorySchemas.repositoryResponse,
+          404: repositorySchemas.errorResponse,
+          500: repositorySchemas.errorResponse,
+        },
+      },
+    },
+    async (request, reply) => {
+      const { userId } = request.user as { userId: string };
+      const { id } = request.params;
+
+      try {
+        const updated = await updateRepositorySettings(userId, id, request.body);
+        if (!updated) {
+          return reply.status(404).send({
+            error: "Not Found",
+            message: "Repository not found.",
+          });
+        }
+        return reply.send(serializeRepository(updated));
+      } catch (err) {
+        fastify.log.error({ err }, "Failed to update repository settings");
+        return reply.status(500).send({
+          error: "Internal Server Error",
+          message: "Failed to update repository settings.",
         });
       }
     }
